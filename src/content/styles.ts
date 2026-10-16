@@ -60,8 +60,12 @@ export const SHADOW_CSS = `
 .card .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .card .word { font-size: 22px; font-weight: 700; color: #fff; }
 .card .lemma { color: #aaa; font-size: 13px; }
-.card .phon { color: #90caf9; font-size: 13px; cursor: pointer; }
-.card .phon:hover { text-decoration: underline; }
+.card .pron-row { margin-top: 4px; }
+.pron { display: inline-flex; gap: 14px; flex-wrap: wrap; font-size: 13px; }
+.pron-item { display: inline-flex; align-items: center; gap: 4px; }
+.pron-label { color: #aaa; cursor: pointer; }
+.pron-phone { color: #90caf9; cursor: pointer; font-family: "Lucida Sans Unicode", "Arial Unicode MS", "Segoe UI", sans-serif; }
+.pron-phone:hover { text-decoration: underline; }
 .card .spacer { flex: 1; }
 .card button {
   all: unset; cursor: pointer; border-radius: 6px; padding: 3px 8px; font-size: 13px;

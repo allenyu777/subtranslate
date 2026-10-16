@@ -1,10 +1,10 @@
 import { bg } from "../shared/messaging";
 import { isLlmConfigured } from "../shared/settings";
-import { speak } from "../shared/speech";
 import { normalizeWord, tokenize } from "../shared/tokenize";
 import type { Cue, DictResult, SentenceAnalysis, Settings, WordAnalysis } from "../shared/types";
 import { addWord, findExample, getEntry, removeExample } from "../shared/vocab-store";
 import { h } from "./dom";
+import { pronView } from "./pron-view";
 
 export interface CardHost {
   settings(): Settings;
@@ -112,7 +112,7 @@ export class Card {
     let ai: WordAnalysis | null = null;
     let saved = false;
 
-    const phon = h("span", { class: "phon", title: "点击朗读", onclick: () => speak(t.lemma) });
+    const phon = h("div", { class: "pron-row" }, pronView(t.lemma, undefined));
     const saveBtn = h("button", { class: "primary" }, "☆ 加入生词本");
     const dictSec = h("div", { class: "sec" }, spinner("查询释义…"));
     const trSec = h("div");
@@ -126,12 +126,11 @@ export class Card {
         { class: "head" },
         h("span", { class: "word" }, t.word),
         t.lemma !== normalized && h("span", { class: "lemma" }, `原形 ${t.lemma}`),
-        phon,
-        h("button", { class: "icon", title: "朗读", onclick: () => speak(t.lemma) }, "🔊"),
         h("span", { class: "spacer" }),
         saveBtn,
         this.closeButton(),
       ),
+      phon,
       dictSec,
       h(
         "div",
@@ -155,7 +154,7 @@ export class Card {
       .then((d) => {
         dict = d;
         if (!alive()) return d;
-        phon.textContent = d.phonetic ? `/${d.phonetic.replace(/^\/|\/$/g, "")}/` : "";
+        phon.replaceChildren(pronView(t.lemma, d.pron));
         dictSec.replaceChildren(
           ...(d.entries.length
             ? d.entries.map((e) => h("div", { class: "def" }, h("span", { class: "pos" }, e.pos), e.terms.join("；")))
@@ -215,7 +214,7 @@ export class Card {
               new Promise<undefined>((r) => setTimeout(() => r(undefined), 3000)),
             ]);
           }
-          await addWord({ lemma: t.lemma, phonetic: d?.phonetic ?? "", meaning: summarizeDict(d), example: example() });
+          await addWord({ lemma: t.lemma, pron: d?.pron, meaning: summarizeDict(d), example: example() });
           saved = true;
         }
       } finally {
@@ -237,7 +236,7 @@ export class Card {
         if (!alive()) return;
         aiSec.replaceChildren(renderWordAnalysis(res, settings.showTranslation));
         // 已收藏的话，把 AI 解析一并存进这个例句
-        if (saved) await addWord({ lemma: t.lemma, phonetic: dict?.phonetic ?? "", meaning: summarizeDict(dict), example: example() });
+        if (saved) await addWord({ lemma: t.lemma, pron: dict?.pron, meaning: summarizeDict(dict), example: example() });
       } catch (err) {
         if (!alive()) return;
         aiSec.replaceChildren(

@@ -25,7 +25,7 @@ describe("Google 翻译返回解析", () => {
     });
     expect(d).toEqual({
       word: "run",
-      phonetic: "rən",
+      pron: { uk: "", us: "", ukAudio: "", usAudio: "" },
       entries: [{ pos: "动词", terms: ["跑", "运行", "经营", "竞选", "流", "开"] }],
       translation: "跑",
     });
@@ -64,7 +64,6 @@ describe("导出", () => {
     const entry: VocabEntry = {
       lemma: "run",
       forms: ["runs"],
-      phonetic: "",
       meaning: "动词 跑；经营",
       status: "learning",
       createdAt: 0,

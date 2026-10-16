@@ -14,7 +14,6 @@ main { max-width: 900px; margin: 0 auto; padding: 0 16px 40px; }
 }
 .entry-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .lemma { font-size: 20px; font-weight: 700; }
-.phon { color: var(--link); }
 .forms { color: var(--muted); font-size: 13px; }
 .meaning { margin: 4px 0 8px; }
 .entry-head .grow { flex: 1; }
@@ -37,3 +36,8 @@ main { max-width: 900px; margin: 0 auto; padding: 0 16px 40px; }
 .speakable:hover { text-decoration: underline; }
 button.icon { border: none; background: transparent; padding: 0 4px; font-size: 14px; line-height: 1; }
 button.icon:hover { background: var(--line); }
+.pron { display: inline-flex; gap: 14px; flex-wrap: wrap; font-size: 14px; }
+.pron-item { display: inline-flex; align-items: center; gap: 4px; }
+.pron-label { color: var(--muted); cursor: pointer; }
+.pron-phone { color: var(--link); cursor: pointer; font-family: "Lucida Sans Unicode", "Arial Unicode MS", "Segoe UI", sans-serif; }
+.pron-phone:hover { text-decoration: underline; }

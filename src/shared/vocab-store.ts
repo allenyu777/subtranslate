@@ -1,4 +1,4 @@
-import type { Example, VocabEntry, WordStatus } from "./types";
+import type { Example, Pronunciation, VocabEntry, WordStatus } from "./types";
 
 const PREFIX = "v:";
 const keyOf = (lemma: string) => PREFIX + lemma;
@@ -39,7 +39,7 @@ export function newId(): string {
  */
 export async function addWord(params: {
   lemma: string;
-  phonetic: string;
+  pron?: Pronunciation;
   meaning: string;
   example: Omit<Example, "id" | "addedAt">;
 }): Promise<VocabEntry> {
@@ -48,7 +48,7 @@ export async function addWord(params: {
   const entry: VocabEntry = existing ?? {
     lemma: params.lemma,
     forms: [],
-    phonetic: params.phonetic,
+    pron: params.pron,
     meaning: params.meaning,
     status: "learning",
     examples: [],
@@ -57,7 +57,7 @@ export async function addWord(params: {
   };
   const form = params.example.word.toLowerCase();
   if (!entry.forms.includes(form)) entry.forms.push(form);
-  if (!entry.phonetic) entry.phonetic = params.phonetic;
+  if (params.pron && (params.pron.uk || params.pron.us || !entry.pron)) entry.pron = params.pron;
   if (!entry.meaning) entry.meaning = params.meaning;
   // 重新收藏一个已掌握的词，说明又不会了
   entry.status = "learning";
@@ -94,6 +94,13 @@ export async function updateExample(lemma: string, exampleId: string, patch: Par
   const ex = entry?.examples.find((e) => e.id === exampleId);
   if (!entry || !ex) return;
   Object.assign(ex, patch);
+  await putEntry(entry);
+}
+
+export async function setPron(lemma: string, pron: Pronunciation): Promise<void> {
+  const entry = await getEntry(lemma);
+  if (!entry) return;
+  entry.pron = pron;
   await putEntry(entry);
 }
 

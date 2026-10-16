@@ -1,8 +1,11 @@
 import { normalizeWord, tokenize } from "../shared/tokenize";
-import type { VocabEntry } from "../shared/types";
-import { deleteEntry, getAllEntries, importEntries, isVocabKey, removeExample, setStatus } from "../shared/vocab-store";
+import type { DictResult, VocabEntry } from "../shared/types";
+import { deleteEntry, getAllEntries, importEntries, isVocabKey, removeExample, setPron, setStatus } from "../shared/vocab-store";
 import { h } from "../content/dom";
-import { speak } from "../shared/speech";
+import { pronView } from "../content/pron-view";
+import { bg } from "../shared/messaging";
+import { getSettings } from "../shared/settings";
+import { playWord, speak } from "../shared/speech";
 import { toCsv, videoLink } from "../shared/export";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -55,10 +58,12 @@ function renderEntry(e: VocabEntry): HTMLElement {
     h(
       "div",
       { class: "entry-head" },
-      h("span", { class: "lemma speakable", title: "点击朗读", onclick: () => speak(e.lemma) }, e.lemma),
-      e.phonetic &&
-        h("span", { class: "phon speakable", title: "点击朗读", onclick: () => speak(e.lemma) }, `/${e.phonetic.replace(/^\/|\/$/g, "")}/`),
-      h("button", { class: "icon", title: "朗读单词", onclick: () => speak(e.lemma) }, "🔊"),
+      h(
+        "span",
+        { class: "lemma speakable", title: "点击朗读（美音）", onclick: () => playWord(e.lemma, "us", e.pron?.usAudio) },
+        e.lemma,
+      ),
+      pronView(e.lemma, e.pron),
       e.forms.some((f) => f !== e.lemma) && h("span", { class: "forms" }, `形态：${e.forms.join(", ")}`),
       h("span", { class: "grow" }),
       h(
@@ -148,6 +153,27 @@ function render() {
 async function load() {
   entries = await getAllEntries();
   render();
+  void backfillPronunciation();
+}
+
+let backfilling = false;
+/** 旧版本保存的词没有英美音标，打开生词本时逐个补上 */
+async function backfillPronunciation() {
+  if (backfilling) return;
+  backfilling = true;
+  try {
+    const { targetLang } = await getSettings();
+    for (const e of entries.filter((x) => x.pron === undefined)) {
+      try {
+        const d = await bg<DictResult>({ type: "lookup", word: e.lemma, lemma: e.lemma, target: targetLang });
+        await setPron(e.lemma, d.pron);
+      } catch {
+        // 网络失败就下次再补
+      }
+    }
+  } finally {
+    backfilling = false;
+  }
 }
 
 function download(name: string, content: string, type: string) {

@@ -26,10 +26,18 @@ export interface SentenceAnalysis {
   keyPoints: { text: string; explanation: string }[];
 }
 
+/** 英美音标（IPA，不含两侧斜杠）和发音音频地址 */
+export interface Pronunciation {
+  uk: string;
+  us: string;
+  ukAudio: string;
+  usAudio: string;
+}
+
 /** 词典查询结果 */
 export interface DictResult {
   word: string;
-  phonetic: string;
+  pron: Pronunciation;
   /** 按词性分组的中文释义，如 { pos: "动词", terms: ["跑", "运行"] } */
   entries: { pos: string; terms: string[] }[];
   /** 机器翻译（词典没有收录时兜底） */
@@ -58,7 +66,10 @@ export interface VocabEntry {
   lemma: string;
   /** 见过的所有形态，如 ["ran", "running"] */
   forms: string[];
-  phonetic: string;
+  /** 旧版本保存的音标（来源不统一，已不再显示） */
+  phonetic?: string;
+  /** 英美音标；undefined 表示还没查过 */
+  pron?: Pronunciation;
   /** 词典释义摘要 */
   meaning: string;
   status: WordStatus;

@@ -13,7 +13,7 @@ describe("繁体转简体", () => {
   });
   it("转换已保存的生词", () => {
     const e: VocabEntry = {
-      lemma: "run", forms: ["run"], phonetic: "", meaning: "名詞 跑步；運行", status: "learning", createdAt: 0, updatedAt: 0,
+      lemma: "run", forms: ["run"], meaning: "名詞 跑步；運行", status: "learning", createdAt: 0, updatedAt: 0,
       examples: [{ id: "1", word: "run", sentence: "Run.", translation: "跑！", videoId: "v", videoTitle: "t", time: 0, addedAt: 0 }],
     };
     expect(simplifyEntry(e).meaning).toBe("名词 跑步；运行");
@@ -27,12 +27,15 @@ describe("翻译和查词结果统一为简体", () => {
     vi.stubGlobal("fetch", async (url: string) => {
       const body = url.includes("dictionaryapi")
         ? [{ phonetic: "/rʌn/" }]
-        : { sentences: [{ trans: "跑" }], dict: [{ pos: "名詞", terms: ["跑步", "運行", "运行"] }] };
+        : url.includes("youdao")
+          ? { ec: { word: [{ ukphone: "rʌn", usphone: "rʌn" }] } }
+          : { sentences: [{ trans: "跑" }], dict: [{ pos: "名詞", terms: ["跑步", "運行", "运行"] }] };
       return new Response(JSON.stringify(body));
     });
     const d = await lookupWord("runx", "runx", "zh-CN");
     expect(d.entries).toEqual([{ pos: "名词", terms: ["跑步", "运行"] }]);
-    expect(d.phonetic).toBe("/rʌn/");
+    expect(d.pron.uk).toBe("rʌn");
+    expect(d.pron.us).toBe("rʌn");
   });
 
   it("批量翻译结果被转换", async () => {

@@ -1,5 +1,6 @@
 import { normalizeChinese } from "../shared/chinese";
 import type { DictResult } from "../shared/types";
+import { EMPTY_PRON, lookupPronunciation } from "./pronunciation";
 
 /*
  * 使用 Google 翻译的公开网页接口（client=gtx，无需 API Key）。
@@ -58,16 +59,16 @@ async function translateBatchRaw(texts: string[], target: string): Promise<strin
 }
 
 interface GtDictResponse {
-  sentences?: { trans?: string; src_translit?: string }[];
+  sentences?: { trans?: string }[];
   dict?: { pos?: string; terms?: string[] }[];
 }
 
 export function parseDictResponse(word: string, data: unknown): DictResult {
   const d = data as GtDictResponse;
-  const sentences = d.sentences ?? [];
   return {
     word,
-    phonetic: sentences.find((s) => s.src_translit)?.src_translit ?? "",
+    // Google 的 src_translit 是它自己的注音方式，不是国内常用的 IPA，不使用
+    pron: { ...EMPTY_PRON },
     entries: (d.dict ?? [])
       .filter((e) => e.terms?.length)
       .map((e) => ({ pos: e.pos ?? "", terms: (e.terms ?? []).slice(0, 6) })),
@@ -78,26 +79,8 @@ export function parseDictResponse(word: string, data: unknown): DictResult {
 async function lookupGoogle(word: string, target: string): Promise<DictResult> {
   const url =
     `${GT}/single?client=gtx&sl=en&tl=${encodeURIComponent(target)}&hl=${encodeURIComponent(target)}` +
-    `&dt=t&dt=bd&dt=rm&dj=1&q=${encodeURIComponent(word)}`;
+    `&dt=t&dt=bd&dj=1&q=${encodeURIComponent(word)}`;
   return parseDictResponse(word, await fetchJson(url));
-}
-
-/** 从 dictionaryapi.dev 取音标（取不到就算了） */
-async function lookupPhonetic(word: string): Promise<string> {
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 3000);
-    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, {
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-    if (!res.ok) return "";
-    const data = (await res.json()) as { phonetic?: string; phonetics?: { text?: string }[] }[];
-    const first = data[0];
-    return first?.phonetic || first?.phonetics?.find((p) => p.text)?.text || "";
-  } catch {
-    return "";
-  }
 }
 
 const cache = new Map<string, DictResult>();
@@ -107,13 +90,13 @@ export async function lookupWord(word: string, lemma: string, target: string): P
   const key = `${target}:${lemma}:${word}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const [main, phonetic] = await Promise.all([lookupGoogle(lemma, target), lookupPhonetic(lemma)]);
+  const [main, pron] = await Promise.all([lookupGoogle(lemma, target), lookupPronunciation(lemma)]);
   let result = main;
   if (!main.entries.length && lemma !== word) {
     const alt = await lookupGoogle(word, target).catch(() => null);
     if (alt?.entries.length) result = alt;
   }
-  if (phonetic) result = { ...result, phonetic };
+  result = { ...result, pron };
   result = {
     ...result,
     entries: result.entries.map((e) => ({
