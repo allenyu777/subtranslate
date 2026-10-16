@@ -17,6 +17,8 @@ let track: TrackInfo | null = null;
 let cues: Cue[] = [];
 let translations: (string | undefined)[] = [];
 let translating = false;
+/** 关闭自动翻译时，用户手动点「译本句」翻译过的字幕 */
+let revealed = new Set<number>();
 let lemmaMap: Record<string, string> = {};
 let learning = new Set<string>();
 let currentIdx = -1;
@@ -37,7 +39,9 @@ window.addEventListener("message", (ev: MessageEvent) => {
   if (ev.source !== window) return;
   const d = ev.data as { [TAG]?: boolean; dir?: string; type?: string; url?: string; text?: string } | null;
   if (!d?.[TAG] || d.dir !== "toContent" || d.type !== "timedtext" || !d.url) return;
-  onTimedtext(d.url, d.text ?? "");
+  const { url, text } = d;
+  // 等读到用户设置后再处理，避免用默认设置（自动翻译）抢跑
+  void settingsReady.then(() => onTimedtext(url, text ?? ""));
 });
 
 function currentVideoId(): string {
@@ -77,7 +81,7 @@ const card = new Card(wrap, hostEl, {
   },
 });
 
-const trBtn = h("button", { title: "显示/隐藏中文翻译" }, "译");
+const trBtn = h("button", { title: "翻译当前这一句", onclick: () => revealCurrent() }, "译本句");
 toolbar.append(
   h("button", { title: "上一句", onclick: () => jump(-1) }, "⏮ 上一句"),
   h("button", { title: "重播本句", onclick: () => jump(0) }, "⟲ 重播"),
@@ -86,10 +90,6 @@ toolbar.append(
   h("button", { title: "让 AI 解析整句", onclick: (ev) => openSentenceCard(ev) }, "🤖 解析整句"),
   h("button", { title: "打开生词本", onclick: () => void bg({ type: "openPage", page: "vocab" }) }, "📒 生词本"),
 );
-trBtn.addEventListener("click", () => {
-  settings = { ...settings, showTranslation: !settings.showTranslation };
-  void chrome.storage.local.set({ settings });
-});
 
 // 阻止点击冒泡到播放器（否则会触发暂停/播放）
 for (const type of ["click", "dblclick", "mousedown", "mouseup", "pointerdown", "pointerup"]) {
@@ -160,7 +160,8 @@ function applySettings() {
   hostEl.style.setProperty("--st-font", `${settings.fontSize}px`);
   hostEl.style.display = settings.enabled ? "" : "none";
   getPlayer()?.classList.toggle("st-active", settings.enabled && cues.length > 0);
-  trBtn.classList.toggle("on", settings.showTranslation);
+  // 自动翻译开启时每句都有翻译，不需要「译本句」按钮
+  trBtn.style.display = settings.showTranslation ? "none" : "";
   if (settings.showTranslation && cues.length && !translating) void startTranslation(loadToken);
   dirty = true;
 }
@@ -209,7 +210,7 @@ function render() {
     en.append(span);
   }
   line.replaceChildren(en);
-  if (settings.showTranslation) {
+  if (settings.showTranslation || revealed.has(currentIdx)) {
     const tr = translations[currentIdx];
     line.append(h("div", { class: tr === undefined ? "zh pending" : "zh" }, tr ?? "翻译中…"));
   }
@@ -232,7 +233,7 @@ function openWordCard(word: string, idx: number, span: HTMLElement) {
   span.classList.add("active");
   const norm = normalizeWord(word);
   card.openWord(
-    { word, lemma: lemmaMap[norm] ?? norm, cue, translation: translations[idx], context: contextFor(idx) },
+    { word, lemma: lemmaMap[norm] ?? norm, cue, getTranslation: () => translateCue(idx), context: contextFor(idx) },
     span.getBoundingClientRect(),
   );
 }
@@ -242,7 +243,28 @@ function openSentenceCard(ev: MouseEvent) {
   const cue = cues[idx];
   if (!cue) return;
   pauseVideo();
-  card.openSentence(cue, translations[idx], contextFor(idx), (ev.currentTarget as HTMLElement).getBoundingClientRect());
+  const tr = settings.showTranslation || revealed.has(idx) ? translations[idx] : undefined;
+  card.openSentence(cue, tr, contextFor(idx), (ev.currentTarget as HTMLElement).getBoundingClientRect());
+}
+
+/** 翻译单句（有缓存直接返回），用于「译本句」、单词卡片和保存生词 */
+async function translateCue(idx: number): Promise<string> {
+  const cached = translations[idx];
+  if (cached !== undefined) return cached;
+  const token = loadToken;
+  const [res] = await bg<string[]>({ type: "translate", texts: [cues[idx].text], target: settings.targetLang });
+  if (token === loadToken) translations[idx] = res ?? "";
+  return res ?? "";
+}
+
+function revealCurrent() {
+  const idx = currentIdx >= 0 ? currentIdx : findPrevCueIndex(cues, getVideo()?.currentTime ?? 0);
+  if (!cues[idx]) return;
+  revealed.add(idx);
+  dirty = true;
+  void translateCue(idx)
+    .catch(() => "")
+    .then(() => (dirty = true));
 }
 
 function jump(delta: number) {
@@ -284,6 +306,7 @@ function onTimedtext(url: string, text: string) {
   track = info;
   cues = parsed;
   translations = new Array<string | undefined>(cues.length);
+  revealed = new Set();
   translating = false;
   currentIdx = -1;
   dirty = true;
@@ -313,6 +336,7 @@ async function startTranslation(token: number) {
   let cur: number[] = [];
   let chars = 0;
   cues.forEach((c, i) => {
+    if (translations[i] !== undefined) return;
     if (cur.length >= 40 || chars + c.text.length > 3000) {
       chunks.push(cur);
       cur = [];
@@ -330,6 +354,8 @@ async function startTranslation(token: number) {
 
   const worker = async () => {
     for (let chunk = chunks.shift(); chunk; chunk = chunks.shift()) {
+      // 用户中途关闭了自动翻译
+      if (!settings.showTranslation || token !== loadToken) return;
       try {
         const res = await bg<string[]>({
           type: "translate",
@@ -346,6 +372,7 @@ async function startTranslation(token: number) {
     }
   };
   await Promise.all([worker(), worker()]);
+  if (token === loadToken) translating = false;
 }
 
 function resetForVideo(id: string) {
@@ -353,6 +380,7 @@ function resetForVideo(id: string) {
   track = null;
   cues = [];
   translations = [];
+  revealed = new Set();
   translating = false;
   currentIdx = -1;
   dirty = true;
@@ -408,8 +436,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (vocabChanged) dirty = true;
 });
 
+let markReady: () => void = () => {};
+const settingsReady = new Promise<void>((resolve) => (markReady = resolve));
+
 async function init() {
   settings = await getSettings();
+  markReady();
   learning = await getLearningLemmas();
   applySettings();
   requestAnimationFrame(tick);

@@ -76,6 +76,18 @@ $("test").addEventListener("click", async () => {
   }
 });
 input("provider").addEventListener("change", toggleProvider);
+
+// 字幕相关的开关改动后立即生效，不需要点「保存」
+async function saveDisplayOptions() {
+  const cur = await getSettings();
+  const s: Settings = { ...cur };
+  for (const k of BOOLS) s[k] = checkbox(k).checked;
+  s.targetLang = input("targetLang").value;
+  s.fontSize = Number(input("fontSize").value);
+  await saveSettings(s);
+  setStatus("已保存 ✓", "ok");
+}
+for (const id of [...BOOLS, "targetLang", "fontSize"]) input(id).addEventListener("change", () => void saveDisplayOptions());
 input("fontSize").addEventListener("input", () => ($("fontSizeVal").textContent = input("fontSize").value));
 
 void getSettings().then(fill);

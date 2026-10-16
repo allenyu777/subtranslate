@@ -18,7 +18,8 @@ export interface WordTarget {
   word: string;
   lemma: string;
   cue: Cue;
-  translation?: string;
+  /** 获取整句翻译（自动翻译关闭时由用户点击触发） */
+  getTranslation: () => Promise<string>;
   /** 前后几句字幕，供 AI 参考 */
   context: string;
 }
@@ -124,6 +125,7 @@ export class Card {
     const phon = h("span", { class: "phon" });
     const saveBtn = h("button", { class: "primary" }, "☆ 加入生词本");
     const dictSec = h("div", { class: "sec" }, spinner("查询释义…"));
+    const trSec = h("div");
     const aiSec = h("div", { class: "sec" });
 
     const card = h(
@@ -146,7 +148,7 @@ export class Card {
         { class: "sec" },
         h("div", { class: "label" }, "原句"),
         h("div", { class: "sent" }, ...sentenceNodes(t.cue.text, t.word)),
-        t.translation && h("div", { class: "muted" }, t.translation),
+        trSec,
       ),
       aiSec,
     );
@@ -179,12 +181,26 @@ export class Card {
     const example = () => ({
       word: t.word,
       sentence: t.cue.text,
-      translation: t.translation,
+      translation,
       videoId,
       videoTitle: this.host.videoTitle(),
       time: t.cue.start,
       ai: ai ?? undefined,
     });
+
+    // 整句翻译：自动翻译开启时直接显示，关闭时点按钮才翻译
+    let translation: string | undefined;
+    const showTranslation = async () => {
+      trSec.replaceChildren(spinner("翻译中…"));
+      try {
+        translation = await t.getTranslation();
+        if (alive()) trSec.replaceChildren(h("div", { class: "muted" }, translation || "（翻译失败）"));
+      } catch {
+        if (alive()) trSec.replaceChildren(h("div", { class: "err" }, "翻译失败"));
+      }
+    };
+    if (settings.showTranslation) void showTranslation();
+    else trSec.append(h("button", { onclick: () => void showTranslation() }, "显示整句翻译"));
 
     void getEntry(t.lemma).then((entry) => {
       if (!alive()) return;
@@ -202,6 +218,13 @@ export class Card {
           saved = false;
         } else {
           const d = await Promise.race([dictPromise, new Promise<null>((r) => setTimeout(() => r(null), 3000))]);
+          // 生词本里保存整句翻译方便复习（只存不显示）
+          if (translation === undefined) {
+            translation = await Promise.race([
+              t.getTranslation().catch(() => undefined),
+              new Promise<undefined>((r) => setTimeout(() => r(undefined), 3000)),
+            ]);
+          }
           await addWord({ lemma: t.lemma, phonetic: d?.phonetic ?? "", meaning: summarizeDict(d), example: example() });
           saved = true;
         }
@@ -222,7 +245,7 @@ export class Card {
         });
         ai = res;
         if (!alive()) return;
-        aiSec.replaceChildren(renderWordAnalysis(res));
+        aiSec.replaceChildren(renderWordAnalysis(res, settings.showTranslation));
         // 已收藏的话，把 AI 解析一并存进这个例句
         if (saved) await addWord({ lemma: t.lemma, phonetic: dict?.phonetic ?? "", meaning: summarizeDict(dict), example: example() });
       } catch (err) {
@@ -288,7 +311,7 @@ export class Card {
   }
 }
 
-export function renderWordAnalysis(a: WordAnalysis): HTMLElement {
+export function renderWordAnalysis(a: WordAnalysis, showSentence = true): HTMLElement {
   return h(
     "div",
     { class: "ai-box" },
@@ -303,7 +326,7 @@ export function renderWordAnalysis(a: WordAnalysis): HTMLElement {
     a.explanation && h("div", { class: "def" }, a.explanation),
     a.phrase && h("div", { class: "def" }, h("span", { class: "pos" }, "短语"), a.phrase),
     a.commonMeanings && h("div", { class: "def" }, h("span", { class: "pos" }, "常见义"), a.commonMeanings),
-    a.sentenceTranslation && h("div", { class: "def muted" }, `整句：${a.sentenceTranslation}`),
+    showSentence && a.sentenceTranslation && h("div", { class: "def muted" }, `整句：${a.sentenceTranslation}`),
   );
 }
 
