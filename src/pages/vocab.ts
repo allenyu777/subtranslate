@@ -1,6 +1,13 @@
 import { normalizeWord, tokenize } from "../shared/tokenize";
 import type { Pronunciation, VocabEntry } from "../shared/types";
-import { fromLanguageReactor, isLanguageReactorExport, type ImportStats } from "../shared/import";
+import {
+  findItems,
+  fromLanguageReactor,
+  isLanguageReactorExport,
+  isOwnBackup,
+  type ImportStats,
+  type LrConvertReport,
+} from "../shared/import";
 import { deleteEntry, getAllEntries, getEntry, importVocab, isVocabKey, putEntries, removeExample, setStatus } from "../shared/vocab-store";
 import { h } from "../content/dom";
 import { pronView } from "../content/pron-view";
@@ -214,41 +221,41 @@ $<HTMLInputElement>("import-file").addEventListener("change", async (ev) => {
   const show = (text: string) => (status.textContent = text);
   try {
     show(`正在读取 ${file.name}（${(file.size / 1024 / 1024).toFixed(1)} MB）…`);
-    const data = JSON.parse(await file.text()) as unknown;
-    if (!Array.isArray(data)) throw new Error("文件格式不对");
-    let incoming: VocabEntry[];
-    let source = "备份";
-    let skipped = 0;
-    if (isLanguageReactorExport(data)) {
-      source = "Language Reactor";
-      show(`识别为 Language Reactor 导出，共 ${data.length} 条，正在统一单词原形…`);
-      const words = [...new Set(data.map((x) => x.word?.text ?? "").filter((w) => w && !/\s/.test(w)))];
+    const items = findItems(JSON.parse(await file.text()));
+    if (!items) throw new Error("文件里没有找到生词列表");
+    if (isLanguageReactorExport(items)) {
+      show(`识别为 Language Reactor 导出，共 ${items.length} 条，正在统一单词原形…`);
+      const words = [...new Set(items.map((x) => x.word?.text ?? "").filter((w) => w && !/\s/.test(w)))];
       const lemmas: Record<string, string> = {};
       for (let i = 0; i < words.length; i += 2000) {
         Object.assign(lemmas, await bg<Record<string, string>>({ type: "lemmatize", words: words.slice(i, i + 2000) }));
       }
-      const res = fromLanguageReactor(data, (w) => lemmas[w] ?? w.toLowerCase());
-      incoming = res.entries;
-      skipped = res.skipped;
+      const { entries: incoming, report } = fromLanguageReactor(items, (w) => lemmas[w] ?? w.toLowerCase());
+      const stats = await importVocab(incoming, (done, total) => show(`正在写入生词本 ${done}/${total}…`));
+      show(lrSummary(items.length, report, stats));
+    } else if (isOwnBackup(items)) {
+      const stats = await importVocab(items, (done, total) => show(`正在写入生词本 ${done}/${total}…`));
+      show(`从备份导入完成：${statsText(stats)}。`);
     } else {
-      incoming = data as VocabEntry[];
+      throw new Error("无法识别的文件格式：既不是本插件的备份，也不是 Language Reactor 导出的 JSON");
     }
-    const stats = await importVocab(incoming, (done, total) => show(`正在写入生词本 ${done}/${total}…`));
-    show(summary(source, stats, skipped));
   } catch (err) {
     show(`导入失败：${(err as Error).message}`);
   }
 });
 
-function summary(source: string, s: ImportStats, skipped: number): string {
-  const parts = [
-    `从${source}导入完成：新增 ${s.added} 个词`,
-    `合并到已有单词 ${s.merged} 个`,
-    `新增例句 ${s.examplesAdded} 条`,
-  ];
+function statsText(s: ImportStats): string {
+  const parts = [`新增 ${s.added} 个词`, `合并到已有单词 ${s.merged} 个`, `新增例句 ${s.examplesAdded} 条`];
   if (s.examplesSkipped) parts.push(`跳过重复例句 ${s.examplesSkipped} 条`);
-  if (skipped) parts.push(`跳过已忽略或非英语的条目 ${skipped} 个`);
-  return parts.join("，") + "。";
+  return parts.join("，");
+}
+
+function lrSummary(total: number, r: LrConvertReport, s: ImportStats): string {
+  const skipped = [r.nonEnglish && `非英语 ${r.nonEnglish}`, r.invalid && `无法识别 ${r.invalid}`].filter(Boolean);
+  return (
+    `从 Language Reactor 导入完成：${statsText(s)}。` +
+    `（文件共 ${total} 条${skipped.length ? `，跳过 ${skipped.join("，")}` : ""}）`
+  );
 }
 
 search.addEventListener("input", render);

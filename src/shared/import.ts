@@ -80,6 +80,7 @@ interface LrToken {
 
 interface LrItem {
   key?: string;
+  langCode_G?: string;
   itemType?: string;
   learningStage?: string;
   timeCreated_ms?: number;
@@ -104,12 +105,33 @@ interface LrItem {
   };
 }
 
+/** 只要大部分条目像 Language Reactor 的条目（key 形如 "WORD|acre|en"）就认为是它的导出 */
 export function isLanguageReactorExport(data: unknown): data is LrItem[] {
-  return (
-    Array.isArray(data) &&
-    data.length > 0 &&
-    data.every((x) => typeof (x as LrItem)?.key === "string" && /^(WORD|PHRASE)\|/.test((x as LrItem).key!))
-  );
+  if (!Array.isArray(data) || !data.length) return false;
+  const looksLr = (x: unknown) => {
+    const it = x as LrItem;
+    return typeof it?.key === "string" && /^[A-Z_]+\|/.test(it.key) && ("context" in it || "word" in it || "learningStage" in it);
+  };
+  return data.filter(looksLr).length >= data.length / 2;
+}
+
+/** 在顶层数组或对象里的第一个数组中查找条目（兼容外面包了一层对象的文件） */
+export function findItems(data: unknown): unknown[] | null {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    for (const v of Object.values(data)) if (Array.isArray(v)) return v;
+  }
+  return null;
+}
+
+/** 本插件自己的备份：条目带 lemma 和 examples */
+export function isOwnBackup(data: unknown[]): data is VocabEntry[] {
+  return data.length > 0 && data.some((x) => typeof (x as VocabEntry)?.lemma === "string" && Array.isArray((x as VocabEntry).examples));
+}
+
+export interface LrConvertReport {
+  nonEnglish: number;
+  invalid: number;
 }
 
 const at = <T>(obj: Record<string, T> | T[] | null | undefined, k: string): T | undefined =>
@@ -155,13 +177,19 @@ const cleanTranslation = (s: string | undefined) => (s ?? "").replace(/^[\s。�
  */
 export function fromLanguageReactor(items: LrItem[], lemmaOf: (word: string) => string) {
   const entries: VocabEntry[] = [];
-  let skipped = 0;
+  const report: LrConvertReport = { nonEnglish: 0, invalid: 0 };
   for (const item of items) {
     const isPhrase = item.itemType === "PHRASE" || item.key?.startsWith("PHRASE|");
     const headword = (item.word?.text ?? item.phrase?.text ?? item.key?.split("|")[1] ?? "").trim();
-    // 只导入英文；跳过在 Language Reactor 中被忽略的词
-    if (!headword || (item.key && !item.key.endsWith("|en")) || item.learningStage === "SKIPPED") {
-      skipped++;
+    const lang = (item.langCode_G ?? item.key?.split("|").at(-1) ?? "en").toLowerCase();
+    // 只导入单词和短语，其他类型（如整句收藏）跳过
+    const type = item.itemType ?? item.key?.split("|")[0];
+    if (!headword || (type !== "WORD" && type !== "PHRASE")) {
+      report.invalid++;
+      continue;
+    }
+    if (!lang.startsWith("en")) {
+      report.nonEnglish++;
       continue;
     }
     const lemma = isPhrase || /\s/.test(headword) ? headword.toLowerCase() : lemmaOf(headword);
@@ -188,11 +216,12 @@ export function fromLanguageReactor(items: LrItem[], lemmaOf: (word: string) => 
       lemma,
       forms,
       meaning: (item.wordTranslationsArr ?? []).filter(Boolean).slice(0, 5).join("；"),
-      status: item.learningStage === "KNOWN" ? "mastered" : "learning",
+      // 导入的都是要学的词，掌握后在生词本里标记即可
+      status: "learning",
       examples,
       createdAt: created,
       updatedAt: item.timeModified_ms ?? created,
     });
   }
-  return { entries, skipped };
+  return { entries, report };
 }

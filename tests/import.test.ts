@@ -1,13 +1,11 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { fromLanguageReactor, isLanguageReactorExport, mergeAll } from "../src/shared/import";
+import { findItems, fromLanguageReactor, isLanguageReactorExport, isOwnBackup, mergeAll } from "../src/shared/import";
 import { lemmatize } from "../src/shared/lemma";
 import type { VocabEntry } from "../src/shared/types";
 
-// 真实的 Language Reactor 导出（去掉了音频和缩略图数据）。导出时这两个词是「已忽略」，
-// 这里改成「学习中」来测试正常的导入流程
-const raw = JSON.parse(readFileSync(new URL("./fixtures/language-reactor.json", import.meta.url), "utf8"));
-const fixture = raw.map((x: object) => ({ ...x, learningStage: "LEARNING" }));
+// 真实的 Language Reactor 导出（去掉了音频和缩略图数据）
+const fixture = JSON.parse(readFileSync(new URL("./fixtures/language-reactor.json", import.meta.url), "utf8"));
 
 const entry = (lemma: string, over: Partial<VocabEntry> = {}): VocabEntry => ({
   lemma,
@@ -34,11 +32,27 @@ describe("Language Reactor 导入", () => {
     expect(isLanguageReactorExport(fixture)).toBe(true);
     expect(isLanguageReactorExport([entry("run")])).toBe(false);
     expect(isLanguageReactorExport([])).toBe(false);
+    expect(isOwnBackup([entry("run")])).toBe(true);
+    expect(isOwnBackup(fixture)).toBe(false);
+  });
+
+  it("文件里混有其他类型的条目时仍能识别，未知条目计为无法识别", () => {
+    const mixed = [...fixture, { key: "SOMETHING|x|en", context: {} }, { key: "WORD||en", learningStage: "LEARNING" }];
+    expect(isLanguageReactorExport(mixed)).toBe(true);
+    const { entries, report } = fromLanguageReactor(mixed, lemmatize);
+    expect(entries.map((e) => e.lemma)).toEqual(["acre", "raptor"]);
+    expect(report.invalid).toBe(2);
+  });
+
+  it("兼容外面包了一层对象的文件", () => {
+    expect(findItems({ version: 1, items: fixture })).toBe(fixture);
+    expect(findItems(fixture)).toBe(fixture);
+    expect(findItems({ a: 1 })).toBeNull();
   });
 
   it("转换真实导出：单词、所在句子、翻译、视频和时间", () => {
-    const { entries, skipped } = fromLanguageReactor(fixture, lemmatize);
-    expect(skipped).toBe(0);
+    const { entries, report } = fromLanguageReactor(fixture, lemmatize);
+    expect(report).toEqual({ nonEnglish: 0, invalid: 0 });
     const acre = entries.find((e) => e.lemma === "acre")!;
     expect(acre.forms).toEqual(["acre", "acres"]);
     expect(acre.meaning).toBe("英亩；亩；公亩");
@@ -57,22 +71,16 @@ describe("Language Reactor 导入", () => {
     expect(raptor.status).toBe("learning");
   });
 
-  it("跳过在 Language Reactor 中被忽略（SKIPPED）的词", () => {
-    const { entries, skipped } = fromLanguageReactor(raw, lemmatize);
-    expect(entries).toHaveLength(0);
-    expect(skipped).toBe(2);
-  });
-
-  it("用本插件的规则统一原形；KNOWN 视为已掌握；跳过非英语；短语不做词形还原", () => {
+  it("用本插件的规则统一原形；导入的词都是学习中；跳过非英语；短语不做词形还原", () => {
     const items = [
       { key: "WORD|extradited|en", word: { text: "extradited" }, learningStage: "KNOWN", wordTranslationsArr: ["引渡"] },
       { key: "WORD|bonjour|fr", word: { text: "bonjour" } },
       { key: "PHRASE|at a loss|en", itemType: "PHRASE", phrase: { text: "At a loss" } },
     ];
-    const { entries, skipped } = fromLanguageReactor(items, lemmatize);
-    expect(skipped).toBe(1);
+    const { entries, report } = fromLanguageReactor(items, lemmatize);
+    expect(report.nonEnglish).toBe(1);
     expect(entries.map((e) => [e.lemma, e.status])).toEqual([
-      ["extradite", "mastered"],
+      ["extradite", "learning"],
       ["at a loss", "learning"],
     ]);
   });
