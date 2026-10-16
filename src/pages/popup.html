@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>SubTranslate</title>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    body { width: 260px; padding: 14px; }
+    h1 { font-size: 16px; margin: 0 0 10px; }
+    label { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+    .btns { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .btns button { width: 100%; }
+    #count { font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>SubTranslate 字幕学英语</h1>
+  <label><input type="checkbox" id="enabled" /> 在 YouTube 上启用</label>
+  <label><input type="checkbox" id="showTranslation" /> 显示中文翻译</label>
+  <div id="count" class="muted"></div>
+  <div class="btns">
+    <button class="primary" id="vocab">📒 打开生词本</button>
+    <button id="options">⚙️ 设置</button>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>设置 · SubTranslate</title>
+  <link rel="stylesheet" href="common.css" />
+  <style>
+    main { max-width: 680px; margin: 0 auto; padding: 24px 16px 60px; }
+    h1 { font-size: 22px; margin: 0 0 16px; }
+    h2 { font-size: 16px; margin: 0 0 10px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    label.row { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+    .field { margin: 10px 0; }
+    .field > span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .field input, .field select { width: 100%; }
+    .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    #status { font-size: 13px; }
+    .ok { color: var(--ok); } .err { color: var(--danger); }
+    small { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>⚙️ SubTranslate 设置</h1>
+
+    <section class="panel">
+      <h2>字幕</h2>
+      <label class="row"><input type="checkbox" id="enabled" /> 启用（在 YouTube 上显示可点击的字幕）</label>
+      <label class="row"><input type="checkbox" id="showTranslation" /> 显示中文翻译</label>
+      <label class="row"><input type="checkbox" id="pauseOnHover" /> 鼠标移到字幕上时自动暂停</label>
+      <label class="row"><input type="checkbox" id="autoEnableCaptions" /> 打开视频时自动开启 CC 字幕</label>
+      <div class="field">
+        <span>翻译语言</span>
+        <select id="targetLang">
+          <option value="zh-CN">简体中文</option>
+          <option value="zh-TW">繁體中文</option>
+        </select>
+      </div>
+      <div class="field">
+        <span>字幕字号：<b id="fontSizeVal"></b> px</span>
+        <input type="range" id="fontSize" min="14" max="40" step="1" />
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>AI 语境解析（大模型）</h2>
+      <small>用于解析「这个词在这句话里到底是什么意思」。API Key 只保存在本机浏览器中，请求由扩展直接发往你选择的服务商。</small>
+      <div class="field">
+        <span>服务商</span>
+        <select id="provider">
+          <option value="anthropic">Anthropic Claude</option>
+          <option value="openai">OpenAI 兼容接口（DeepSeek / 通义千问 / Kimi / OpenAI 等）</option>
+        </select>
+      </div>
+      <div id="anthropic-fields">
+        <div class="field"><span>Anthropic API Key</span><input type="password" id="anthropicKey" placeholder="sk-ant-..." /></div>
+        <div class="field">
+          <span>模型</span>
+          <select id="anthropicModel">
+            <option value="claude-opus-5-5">Claude Opus 5.5（默认，质量最好）</option>
+            <option value="claude-sonnet-5-5">Claude Sonnet 5.5（更便宜）</option>
+            <option value="claude-haiku-5-5">Claude Haiku 5.5（最快最便宜）</option>
+          </select>
+        </div>
+      </div>
+      <div id="openai-fields">
+        <div class="field"><span>Base URL</span><input type="text" id="openaiBaseUrl" placeholder="https://api.deepseek.com/v1" /></div>
+        <div class="field"><span>API Key</span><input type="password" id="openaiKey" placeholder="sk-..." /></div>
+        <div class="field"><span>模型名</span><input type="text" id="openaiModel" placeholder="deepseek-chat" /></div>
+      </div>
+      <label class="row"><input type="checkbox" id="autoAnalyze" /> 点开单词时自动进行 AI 解析（会消耗更多 API 额度）</label>
+    </section>
+
+    <div class="actions">
+      <button class="primary" id="save">保存</button>
+      <button id="test">测试 AI 连接</button>
+      <span id="status"></span>
+    </div>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

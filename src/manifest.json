@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "SubTranslate 字幕学英语",
+  "version": "0.1.0",
+  "description": "YouTube 英文字幕翻译、点词查询、带例句的生词本、AI 语境解析",
+  "icons": { "16": "icons/16.png", "48": "icons/48.png", "128": "icons/128.png" },
+  "action": { "default_popup": "pages/popup.html", "default_icon": { "16": "icons/16.png", "48": "icons/48.png" } },
+  "options_page": "pages/options.html",
+  "background": { "service_worker": "background.js", "type": "module" },
+  "permissions": ["storage", "unlimitedStorage"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://translate.googleapis.com/*",
+    "https://api.dictionaryapi.dev/*",
+    "https://api.anthropic.com/*"
+  ],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

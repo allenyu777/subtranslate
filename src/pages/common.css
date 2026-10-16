@@ -1,0 +1,29 @@
+:root {
+  --bg: #f6f7f9; --panel: #fff; --text: #1d1d1f; --muted: #6b7280; --line: #e5e7eb;
+  --accent: #f59e0b; --accent-text: #1a1a1a; --hl: #b45309; --link: #2563eb; --ok: #15803d; --danger: #b91c1c;
+  --ai-bg: #f5f3ff; --ai-line: #ddd6fe;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212; --panel: #1e1e1e; --text: #e8e8e8; --muted: #9ca3af; --line: #2f2f2f;
+    --accent: #f9a825; --hl: #ffd54f; --link: #90caf9; --ok: #4caf50; --danger: #ef9a9a;
+    --ai-bg: #262335; --ai-line: #3d3560;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.6 "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+button, select, input { font: inherit; color: inherit; }
+button {
+  cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 5px 12px;
+}
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: transparent; font-weight: 600; }
+button.danger { color: var(--danger); }
+input[type=text], input[type=password], input[type=search], select {
+  border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 10px;
+}
+a { color: var(--link); }
+.muted { color: var(--muted); }

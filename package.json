@@ -1,0 +1,32 @@
+{
+  "name": "subtranslate",
+  "version": "0.1.0",
+  "description": "YouTube 英文字幕翻译 + 点词查询 + 生词本（带例句）+ AI 语境解析的 Chrome 扩展",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc",
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allenyu777/subtranslate.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/allenyu777/subtranslate/issues"
+  },
+  "homepage": "https://github.com/allenyu777/subtranslate#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
+    "wink-lemmatizer": "^3.0.4"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.5",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  },
+  "private": true,
+  "type": "module"
+}
