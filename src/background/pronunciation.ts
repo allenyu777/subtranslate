@@ -1,4 +1,5 @@
 import type { Pronunciation } from "../shared/types";
+import { fetchJson, fetchYoudao } from "./youdao";
 
 /*
  * 英美音标与真人发音。
@@ -64,32 +65,20 @@ export function youdaoVoice(word: string, accent: "uk" | "us"): string {
   return `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=${accent === "uk" ? 1 : 2}`;
 }
 
-async function getJson(url: string, ms = 4000): Promise<unknown> {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  try {
-    const res = await fetch(url, { signal: ctrl.signal });
-    if (!res.ok) throw new Error(String(res.status));
-    return await res.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 export async function lookupPronunciation(word: string): Promise<Pronunciation> {
-  const [yd, da] = await Promise.all([
-    getJson(`https://dict.youdao.com/jsonapi?q=${encodeURIComponent(word)}`)
-      .then(parseYoudao)
-      .catch(() => ({ uk: "", us: "" })),
-    getJson(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`)
-      .then(parseDictionaryApi)
-      .catch(() => ({ ...EMPTY_PRON })),
-  ]);
+  const yd = await fetchYoudao(word)
+    .then(parseYoudao)
+    .catch(() => ({ uk: "", us: "" }));
+  const youdaoAudio = { ukAudio: youdaoVoice(word, "uk"), usAudio: youdaoVoice(word, "us") };
+  // 有道有英美音标就直接用，不再等海外的 dictionaryapi.dev（国内访问常常要好几秒）
+  if (yd.uk && yd.us) return { ...yd, ...youdaoAudio };
+  const da = await fetchJson(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`, 3000)
+    .then(parseDictionaryApi)
+    .catch(() => ({ ...EMPTY_PRON }));
   return {
     uk: yd.uk || da.uk,
     us: yd.us || da.us,
-    // 优先用 Wiktionary 的真人录音，没有就用有道的发音
-    ukAudio: da.ukAudio || youdaoVoice(word, "uk"),
-    usAudio: da.usAudio || youdaoVoice(word, "us"),
+    ukAudio: da.ukAudio || youdaoAudio.ukAudio,
+    usAudio: da.usAudio || youdaoAudio.usAudio,
   };
 }

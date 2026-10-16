@@ -5,6 +5,8 @@ import { getSettings, isLlmConfigured, saveSettings } from "../shared/settings";
 import type { BgRequest, BgResponse } from "../shared/types";
 import { getAllEntries, putEntry } from "../shared/vocab-store";
 import { analyzeSentence, analyzeWord, translateTexts } from "./llm";
+import { cached } from "./cache";
+import { lookupPronunciation } from "./pronunciation";
 import { lookupWord, translateBatch } from "./translate";
 
 async function handle(req: BgRequest): Promise<unknown> {
@@ -17,7 +19,9 @@ async function handle(req: BgRequest): Promise<unknown> {
     case "translate":
       return translateBatch(req.texts, req.target);
     case "lookup":
-      return lookupWord(req.word, req.lemma, req.target);
+      return cached(`dict:${req.target}:${req.lemma}:${req.word}`, () => lookupWord(req.word, req.lemma, req.target));
+    case "pronounce":
+      return cached(`pron:${req.word}`, () => lookupPronunciation(req.word));
     case "analyzeWord":
       return analyzeWord(await getSettings(), req.word, req.sentence, req.context);
     case "analyzeSentence":

@@ -25,7 +25,6 @@ describe("Google 翻译返回解析", () => {
     });
     expect(d).toEqual({
       word: "run",
-      pron: { uk: "", us: "", ukAudio: "", usAudio: "" },
       entries: [{ pos: "动词", terms: ["跑", "运行", "经营", "竞选", "流", "开"] }],
       translation: "跑",
     });

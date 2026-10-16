@@ -197,9 +197,15 @@ function render() {
     const norm = normalizeWord(tok.text);
     const lemma = lemmaMap[norm] ?? norm;
     const span = h("span", { class: learning.has(lemma) ? "w saved" : "w" }, tok.text);
+    // 鼠标悬停时提前查询，点击时结果多半已经准备好
+    let hoverTimer = 0;
+    span.addEventListener("mouseenter", () => {
+      hoverTimer = window.setTimeout(() => void ensureLemma(norm).then((l) => prefetch(norm, l)), 120);
+    });
+    span.addEventListener("mouseleave", () => clearTimeout(hoverTimer));
     span.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      openWordCard(tok.text, currentIdx, span);
+      void openWordCard(tok.text, currentIdx, span);
     });
     en.append(span);
   }
@@ -211,6 +217,15 @@ function render() {
   wrap.replaceChildren(toolbar, line);
 }
 
+const prefetched = new Set<string>();
+function prefetch(word: string, lemma: string) {
+  const key = `${word}|${lemma}`;
+  if (prefetched.has(key)) return;
+  prefetched.add(key);
+  bg({ type: "lookup", word, lemma, target: settings.targetLang }).catch(() => prefetched.delete(key));
+  bg({ type: "pronounce", word: lemma }).catch(() => {});
+}
+
 function contextFor(idx: number): string {
   return cues
     .slice(Math.max(0, idx - 2), idx + 3)
@@ -219,17 +234,27 @@ function contextFor(idx: number): string {
     .join(" / ");
 }
 
-function openWordCard(word: string, idx: number, span: HTMLElement) {
+/** 词形还原结果：字幕刚加载、批量还原还没完成时，单独请求这个词 */
+async function ensureLemma(norm: string): Promise<string> {
+  if (!(norm in lemmaMap)) {
+    try {
+      Object.assign(lemmaMap, await bg<Record<string, string>>({ type: "lemmatize", words: [norm] }));
+    } catch {
+      // 失败时退化为原词
+    }
+  }
+  return lemmaMap[norm] ?? norm;
+}
+
+async function openWordCard(word: string, idx: number, span: HTMLElement) {
   const cue = cues[idx];
   if (!cue) return;
   pauseVideo();
   shadow.querySelectorAll(".w.active").forEach((el) => el.classList.remove("active"));
   span.classList.add("active");
-  const norm = normalizeWord(word);
-  card.openWord(
-    { word, lemma: lemmaMap[norm] ?? norm, cue, getTranslation: () => translateCue(idx), context: contextFor(idx) },
-    span.getBoundingClientRect(),
-  );
+  const anchor = span.getBoundingClientRect();
+  const lemma = await ensureLemma(normalizeWord(word));
+  card.openWord({ word, lemma, cue, getTranslation: () => translateCue(idx), context: contextFor(idx) }, anchor);
 }
 
 function openSentenceCard(ev: MouseEvent) {

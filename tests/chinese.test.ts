@@ -34,8 +34,6 @@ describe("翻译和查词结果统一为简体", () => {
     });
     const d = await lookupWord("runx", "runx", "zh-CN");
     expect(d.entries).toEqual([{ pos: "名词", terms: ["跑步", "运行"] }]);
-    expect(d.pron.uk).toBe("rʌn");
-    expect(d.pron.us).toBe("rʌn");
   });
 
   it("批量翻译结果被转换", async () => {

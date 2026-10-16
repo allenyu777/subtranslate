@@ -53,17 +53,32 @@ describe("音标解析", () => {
 describe("lookupPronunciation", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("有道音标优先，Wiktionary 真人录音优先，缺失时用有道发音", async () => {
-    vi.stubGlobal("fetch", async (url: string) =>
-      url.includes("youdao")
-        ? new Response(JSON.stringify({ ec: { word: [{ ukphone: "ˈwɔːtə(r)", usphone: "ˈwɔːtər" }] } }))
-        : new Response(JSON.stringify([{ phonetics: [{ text: "/ˈwɔtɚ/", audio: "https://x/water-us.mp3" }] }])),
-    );
+  it("有道有英美音标时直接返回，不请求 dictionaryapi.dev", async () => {
+    const urls: string[] = [];
+    vi.stubGlobal("fetch", async (url: string) => {
+      urls.push(url);
+      return new Response(JSON.stringify({ ec: { word: [{ ukphone: "ˈwɔːtə(r)", usphone: "ˈwɔːtər" }] } }));
+    });
     expect(await lookupPronunciation("water")).toEqual({
       uk: "ˈwɔːtə(r)",
       us: "ˈwɔːtər",
       ukAudio: "https://dict.youdao.com/dictvoice?audio=water&type=1",
-      usAudio: "https://x/water-us.mp3",
+      usAudio: "https://dict.youdao.com/dictvoice?audio=water&type=2",
+    });
+    expect(urls.some((u) => u.includes("dictionaryapi"))).toBe(false);
+  });
+
+  it("有道缺音标时用 dictionaryapi.dev 补充，优先用其真人录音", async () => {
+    vi.stubGlobal("fetch", async (url: string) =>
+      url.includes("youdao")
+        ? new Response(JSON.stringify({ ec: { word: [{ ukphone: "ˈkwɔːk" }] } }))
+        : new Response(JSON.stringify([{ phonetics: [{ text: "/kwɔk/", audio: "https://x/quark-us.mp3" }] }])),
+    );
+    expect(await lookupPronunciation("quarkz")).toEqual({
+      uk: "ˈkwɔːk",
+      us: "kwɔk",
+      ukAudio: "https://dict.youdao.com/dictvoice?audio=quarkz&type=1",
+      usAudio: "https://x/quark-us.mp3",
     });
   });
 
@@ -73,7 +88,7 @@ describe("lookupPronunciation", () => {
         ? new Response("blocked", { status: 403 })
         : new Response(JSON.stringify([{ phonetic: "/rʌn/" }])),
     );
-    const p = await lookupPronunciation("run");
+    const p = await lookupPronunciation("runz");
     expect([p.uk, p.us]).toEqual(["rʌn", "rʌn"]);
   });
 });

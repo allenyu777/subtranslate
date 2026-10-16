@@ -1,10 +1,9 @@
 import { normalizeWord, tokenize } from "../shared/tokenize";
-import type { DictResult, VocabEntry } from "../shared/types";
+import type { Pronunciation, VocabEntry } from "../shared/types";
 import { deleteEntry, getAllEntries, importEntries, isVocabKey, removeExample, setPron, setStatus } from "../shared/vocab-store";
 import { h } from "../content/dom";
 import { pronView } from "../content/pron-view";
 import { bg } from "../shared/messaging";
-import { getSettings } from "../shared/settings";
 import { playWord, speak } from "../shared/speech";
 import { toCsv, videoLink } from "../shared/export";
 
@@ -162,11 +161,9 @@ async function backfillPronunciation() {
   if (backfilling) return;
   backfilling = true;
   try {
-    const { targetLang } = await getSettings();
     for (const e of entries.filter((x) => x.pron === undefined)) {
       try {
-        const d = await bg<DictResult>({ type: "lookup", word: e.lemma, lemma: e.lemma, target: targetLang });
-        await setPron(e.lemma, d.pron);
+        await setPron(e.lemma, await bg<Pronunciation>({ type: "pronounce", word: e.lemma }));
       } catch {
         // 网络失败就下次再补
       }

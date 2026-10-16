@@ -37,7 +37,6 @@ export interface Pronunciation {
 /** 词典查询结果 */
 export interface DictResult {
   word: string;
-  pron: Pronunciation;
   /** 按词性分组的中文释义，如 { pos: "动词", terms: ["跑", "运行"] } */
   entries: { pos: string; terms: string[] }[];
   /** 机器翻译（词典没有收录时兜底） */
@@ -106,6 +105,7 @@ export type BgRequest =
   | { type: "lemmatize"; words: string[] }
   | { type: "translate"; texts: string[]; target: string }
   | { type: "lookup"; word: string; lemma: string; target: string }
+  | { type: "pronounce"; word: string }
   | { type: "analyzeWord"; word: string; sentence: string; context: string }
   | { type: "analyzeSentence"; sentence: string; context: string }
   | { type: "aiTranslate"; texts: string[]; target: string; title: string }

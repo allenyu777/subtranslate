@@ -1,7 +1,7 @@
 import { bg } from "../shared/messaging";
 import { isLlmConfigured } from "../shared/settings";
 import { normalizeWord, tokenize } from "../shared/tokenize";
-import type { Cue, DictResult, SentenceAnalysis, Settings, WordAnalysis } from "../shared/types";
+import type { Cue, DictResult, Pronunciation, SentenceAnalysis, Settings, WordAnalysis } from "../shared/types";
 import { addWord, findExample, getEntry, removeExample } from "../shared/vocab-store";
 import { h } from "./dom";
 import { pronView } from "./pron-view";
@@ -154,7 +154,6 @@ export class Card {
       .then((d) => {
         dict = d;
         if (!alive()) return d;
-        phon.replaceChildren(pronView(t.lemma, d.pron));
         dictSec.replaceChildren(
           ...(d.entries.length
             ? d.entries.map((e) => h("div", { class: "def" }, h("span", { class: "pos" }, e.pos), e.terms.join("；")))
@@ -166,6 +165,16 @@ export class Card {
         if (alive()) dictSec.replaceChildren(h("div", { class: "err" }, `查询失败：${err.message}`));
         return null;
       });
+
+    // 音标单独查询，不拖慢释义的显示
+    let pron: Pronunciation | undefined;
+    const pronPromise = bg<Pronunciation>({ type: "pronounce", word: t.lemma })
+      .then((p) => {
+        pron = p;
+        if (alive()) phon.replaceChildren(pronView(t.lemma, p));
+        return p;
+      })
+      .catch(() => undefined);
 
     const example = () => ({
       word: t.word,
@@ -214,7 +223,8 @@ export class Card {
               new Promise<undefined>((r) => setTimeout(() => r(undefined), 3000)),
             ]);
           }
-          await addWord({ lemma: t.lemma, pron: d?.pron, meaning: summarizeDict(d), example: example() });
+          await Promise.race([pronPromise, new Promise((r) => setTimeout(r, 2000))]);
+          await addWord({ lemma: t.lemma, pron, meaning: summarizeDict(d), example: example() });
           saved = true;
         }
       } finally {
@@ -236,7 +246,7 @@ export class Card {
         if (!alive()) return;
         aiSec.replaceChildren(renderWordAnalysis(res, settings.showTranslation));
         // 已收藏的话，把 AI 解析一并存进这个例句
-        if (saved) await addWord({ lemma: t.lemma, pron: dict?.pron, meaning: summarizeDict(dict), example: example() });
+        if (saved) await addWord({ lemma: t.lemma, pron, meaning: summarizeDict(dict), example: example() });
       } catch (err) {
         if (!alive()) return;
         aiSec.replaceChildren(
