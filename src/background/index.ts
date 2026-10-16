@@ -1,7 +1,7 @@
 import { normalizeChinese, simplifyEntry } from "../shared/chinese";
-import { translateActiveTab } from "../shared/page-inject";
+import { translateActiveTab, translateTab } from "../shared/page-inject";
 import { lemmatize } from "../shared/lemma";
-import { getSettings, isLlmConfigured } from "../shared/settings";
+import { getSettings, isLlmConfigured, saveSettings } from "../shared/settings";
 import type { BgRequest, BgResponse } from "../shared/types";
 import { getAllEntries, putEntry } from "../shared/vocab-store";
 import { analyzeSentence, analyzeWord, translateTexts } from "./llm";
@@ -45,6 +45,41 @@ chrome.runtime.onMessage.addListener((req: BgRequest, _sender, sendResponse) => 
   );
   return true; // 异步响应
 });
+
+// 右键菜单：翻译当前网页
+const MENU = {
+  "st-page-google": "google",
+  "st-page-ai": "ai",
+  "st-page-off": "off",
+} as const;
+
+function createMenus() {
+  chrome.contextMenus.removeAll(() => {
+    const common = {
+      contexts: ["page", "selection", "link", "image"] as [chrome.contextMenus.ContextType, ...chrome.contextMenus.ContextType[]],
+      documentUrlPatterns: ["http://*/*", "https://*/*"],
+    };
+    chrome.contextMenus.create({ id: "st-root", title: "SubTranslate 网页翻译", ...common });
+    chrome.contextMenus.create({ id: "st-page-google", parentId: "st-root", title: "Google 翻译此网页", ...common });
+    chrome.contextMenus.create({ id: "st-page-ai", parentId: "st-root", title: "AI 翻译此网页", ...common });
+    chrome.contextMenus.create({ id: "st-page-off", parentId: "st-root", title: "显示原文", ...common });
+  });
+}
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  const action = MENU[info.menuItemId as keyof typeof MENU];
+  if (!action) return;
+  if (action !== "off") {
+    // 记住选择，快捷键也用这个引擎
+    const s = await getSettings();
+    if (s.pageEngine !== action) await saveSettings({ ...s, pageEngine: action });
+  }
+  // 页面上会显示翻译面板和错误信息；浏览器内部页面等无法注入时忽略
+  await translateTab(tab, action).catch(() => {});
+});
+
+// 每次后台启动都重建一次菜单（removeAll 保证不会重复），不依赖 onInstalled 事件
+createMenus();
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason !== "update") return;
