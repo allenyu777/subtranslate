@@ -89,6 +89,8 @@ export interface Settings {
   autoAnalyze: boolean;
   fontSize: number;
   targetLang: string;
+  /** 快捷键翻译网页时使用的引擎 */
+  pageEngine: "google" | "ai";
   llm: {
     provider: LlmProvider;
     anthropicKey: string;
@@ -106,6 +108,7 @@ export type BgRequest =
   | { type: "lookup"; word: string; lemma: string; target: string }
   | { type: "analyzeWord"; word: string; sentence: string; context: string }
   | { type: "analyzeSentence"; sentence: string; context: string }
+  | { type: "aiTranslate"; texts: string[]; target: string; title: string }
   | { type: "testLlm" }
   | { type: "openPage"; page: "vocab" | "options" };
 

@@ -78,3 +78,19 @@ describe("导出", () => {
     expect(lines[1]).toBe("run,动词 跑；经营,She runs a shop.,她经营一家店。,,https://www.youtube.com/watch?v=v&t=10s");
   });
 });
+
+describe("AI 网页翻译", () => {
+  it("返回数量不一致时报错", async () => {
+    const { translateTexts } = await import("../src/background/llm");
+    const { vi } = await import("vitest");
+    const settings = (await import("../src/shared/settings")).DEFAULT_SETTINGS;
+    const s = { ...settings, llm: { ...settings.llm, provider: "openai" as const, openaiKey: "k" } };
+    const reply = (translations: string[]) =>
+      new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ translations }) } }] }));
+    vi.stubGlobal("fetch", async () => reply(["一", "二"]));
+    expect(await translateTexts(s, ["one", "two"], "zh-CN", "t")).toEqual(["一", "二"]);
+    vi.stubGlobal("fetch", async () => reply(["一"]));
+    await expect(translateTexts(s, ["one", "two"], "zh-CN", "t")).rejects.toThrow("应为 2 段");
+    vi.unstubAllGlobals();
+  });
+});

@@ -11,6 +11,12 @@
     .btns { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
     .btns button { width: 100%; }
     #count { font-size: 13px; }
+    h2 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); font-weight: 600; }
+    .row { display: flex; gap: 6px; }
+    .row button { flex: 1; padding: 5px 4px; }
+    #page-status { font-size: 12px; margin-top: 6px; min-height: 1em; }
+    #page-status.err { color: var(--danger); }
+    kbd { font: 11px monospace; border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
   </style>
 </head>
 <body>
@@ -18,6 +24,13 @@
   <label><input type="checkbox" id="enabled" /> 在 YouTube 上启用</label>
   <label><input type="checkbox" id="showTranslation" /> 自动翻译每一句字幕</label>
   <div id="count" class="muted"></div>
+  <h2>网页翻译 <span class="muted" style="font-weight:normal">快捷键 <kbd id="shortcut">Alt+A</kbd></span></h2>
+  <div class="row">
+    <button id="page-google" title="Google 机器翻译，免费、快">Google 翻译</button>
+    <button id="page-ai" title="使用设置中的大模型翻译，更准确">AI 翻译</button>
+    <button id="page-off" title="移除译文">原文</button>
+  </div>
+  <div id="page-status" class="muted"></div>
   <div class="btns">
     <button class="primary" id="vocab">📒 打开生词本</button>
     <button id="options">⚙️ 设置</button>

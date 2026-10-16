@@ -17,7 +17,7 @@ for (const size of [16, 48, 128]) writeFileSync(`${out}/icons/${size}.png`, make
 
 const common = { bundle: true, target: "chrome111", sourcemap: watch ? "inline" : false, minify: !watch, logLevel: "info" };
 const configs = [
-  { ...common, entryPoints: { inject: "src/inject/main-world.ts", content: "src/content/index.ts" }, outdir: out, format: "iife" },
+  { ...common, entryPoints: { inject: "src/inject/main-world.ts", content: "src/content/index.ts", "page-translate": "src/page/page-translate.ts" }, outdir: out, format: "iife" },
   { ...common, entryPoints: { background: "src/background/index.ts" }, outdir: out, format: "esm" },
   {
     ...common,

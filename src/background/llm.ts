@@ -78,15 +78,20 @@ function sentencePrompt(sentence: string, context: string): string {
     .join("\n");
 }
 
-async function callAnthropic(s: Settings, prompt: string, schema: Record<string, unknown>): Promise<unknown> {
+async function callAnthropic(
+  s: Settings,
+  prompt: string,
+  schema: Record<string, unknown>,
+  system: string,
+): Promise<unknown> {
   const client = new Anthropic({ apiKey: s.llm.anthropicKey, dangerouslyAllowBrowser: true });
   try {
     const response = await client.beta.messages.create({
       model: s.llm.anthropicModel || "claude-opus-5-5",
       max_tokens: 16000,
-      system: SYSTEM,
+      system,
       messages: [{ role: "user", content: prompt }],
-      // 查词需要快速响应，用 low effort
+      // 查词和翻译都需要快速响应，用 low effort
       output_config: { effort: "low", format: { type: "json_schema", schema } },
       // 被安全分类器误拒时由服务端自动换模型重试
       betas: ["server-side-fallback-2026-07-01"],
@@ -117,7 +122,12 @@ export function extractJson(text: string): unknown {
 }
 
 /** OpenAI 兼容接口（DeepSeek、通义千问、Kimi、OpenAI 等） */
-async function callOpenAiCompatible(s: Settings, prompt: string, schema: Record<string, unknown>): Promise<unknown> {
+async function callOpenAiCompatible(
+  s: Settings,
+  prompt: string,
+  schema: Record<string, unknown>,
+  system: string,
+): Promise<unknown> {
   const base = s.llm.openaiBaseUrl.replace(/\/+$/, "");
   const res = await fetch(`${base}/chat/completions`, {
     method: "POST",
@@ -125,7 +135,7 @@ async function callOpenAiCompatible(s: Settings, prompt: string, schema: Record<
     body: JSON.stringify({
       model: s.llm.openaiModel,
       messages: [
-        { role: "system", content: SYSTEM },
+        { role: "system", content: system },
         {
           role: "user",
           content: `${prompt}\n\n只输出一个 JSON 对象，不要输出其他内容。JSON Schema 如下：\n${JSON.stringify(schema)}`,
@@ -142,13 +152,13 @@ async function callOpenAiCompatible(s: Settings, prompt: string, schema: Record<
   return extractJson(content);
 }
 
-function call(s: Settings, prompt: string, schema: Record<string, unknown>): Promise<unknown> {
+function call(s: Settings, prompt: string, schema: Record<string, unknown>, system = SYSTEM): Promise<unknown> {
   if (s.llm.provider === "anthropic") {
     if (!s.llm.anthropicKey) throw new Error("还没有配置 API Key，请先到设置页填写");
-    return callAnthropic(s, prompt, schema);
+    return callAnthropic(s, prompt, schema, system);
   }
   if (!s.llm.openaiKey || !s.llm.openaiBaseUrl) throw new Error("还没有配置 API Key，请先到设置页填写");
-  return callOpenAiCompatible(s, prompt, schema);
+  return callOpenAiCompatible(s, prompt, schema, system);
 }
 
 const str = (v: unknown) => (typeof v === "string" ? v : v == null ? "" : String(v));
@@ -186,4 +196,40 @@ export async function analyzeWord(s: Settings, word: string, sentence: string, c
 
 export async function analyzeSentence(s: Settings, sentence: string, context: string) {
   return normalizeSentenceAnalysis(await call(s, sentencePrompt(sentence, context), SENTENCE_SCHEMA));
+}
+
+const TRANSLATE_SCHEMA = {
+  type: "object",
+  properties: {
+    translations: {
+      type: "array",
+      description: "与输入一一对应的译文，数量和顺序必须与输入完全一致",
+      items: { type: "string" },
+    },
+  },
+  required: ["translations"],
+  additionalProperties: false,
+} as const;
+
+const LANG_NAMES: Record<string, string> = { "zh-CN": "简体中文", "zh-TW": "繁體中文" };
+
+/** 用大模型翻译网页段落，返回与输入一一对应的译文 */
+export async function translateTexts(s: Settings, texts: string[], target: string, pageTitle: string): Promise<string[]> {
+  const lang = LANG_NAMES[target] ?? target;
+  const system =
+    `你是专业译者，负责把网页内容翻译成${lang}。译文要准确、自然、符合${lang}的表达习惯，` +
+    "不要逐词硬译；代码、网址、产品名和人名可以保留原文；不要添加解释或注释。";
+  const prompt = [
+    pageTitle ? `网页标题：${pageTitle}` : "",
+    `请把下面 JSON 数组中的 ${texts.length} 段文字分别翻译成${lang}，它们来自同一个网页，请结合上下文理解。`,
+    `返回的 translations 数组必须正好有 ${texts.length} 项，顺序与输入一致。`,
+    "",
+    JSON.stringify(texts),
+  ]
+    .filter((l, i) => l !== "" || i > 0)
+    .join("\n");
+  const raw = (await call(s, prompt, TRANSLATE_SCHEMA, system)) as { translations?: unknown };
+  const out = Array.isArray(raw?.translations) ? raw.translations.map((t) => str(t)) : [];
+  if (out.length !== texts.length) throw new Error(`AI 返回了 ${out.length} 段译文，应为 ${texts.length} 段`);
+  return out;
 }

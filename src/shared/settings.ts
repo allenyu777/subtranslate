@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoAnalyze: false,
   fontSize: 22,
   targetLang: "zh-CN",
+  pageEngine: "google",
   llm: {
     provider: "anthropic",
     anthropicKey: "",
