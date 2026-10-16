@@ -247,7 +247,7 @@ function summary(source: string, s: ImportStats, skipped: number): string {
     `新增例句 ${s.examplesAdded} 条`,
   ];
   if (s.examplesSkipped) parts.push(`跳过重复例句 ${s.examplesSkipped} 条`);
-  if (skipped) parts.push(`跳过非英语条目 ${skipped} 个`);
+  if (skipped) parts.push(`跳过已忽略或非英语的条目 ${skipped} 个`);
   return parts.join("，") + "。";
 }
 

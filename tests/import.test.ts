@@ -4,8 +4,10 @@ import { fromLanguageReactor, isLanguageReactorExport, mergeAll } from "../src/s
 import { lemmatize } from "../src/shared/lemma";
 import type { VocabEntry } from "../src/shared/types";
 
-// 真实的 Language Reactor 导出（去掉了音频和缩略图数据）
-const fixture = JSON.parse(readFileSync(new URL("./fixtures/language-reactor.json", import.meta.url), "utf8"));
+// 真实的 Language Reactor 导出（去掉了音频和缩略图数据）。导出时这两个词是「已忽略」，
+// 这里改成「学习中」来测试正常的导入流程
+const raw = JSON.parse(readFileSync(new URL("./fixtures/language-reactor.json", import.meta.url), "utf8"));
+const fixture = raw.map((x: object) => ({ ...x, learningStage: "LEARNING" }));
 
 const entry = (lemma: string, over: Partial<VocabEntry> = {}): VocabEntry => ({
   lemma,
@@ -53,6 +55,12 @@ describe("Language Reactor 导入", () => {
     expect(raptor.examples[0].word).toBe("Raptor");
     expect(raptor.examples[0].sentence).toBe("enjoyed our little pre-show Raptor static fire over there.");
     expect(raptor.status).toBe("learning");
+  });
+
+  it("跳过在 Language Reactor 中被忽略（SKIPPED）的词", () => {
+    const { entries, skipped } = fromLanguageReactor(raw, lemmatize);
+    expect(entries).toHaveLength(0);
+    expect(skipped).toBe(2);
   });
 
   it("用本插件的规则统一原形；KNOWN 视为已掌握；跳过非英语；短语不做词形还原", () => {
@@ -106,20 +114,24 @@ describe("合并去重", () => {
     expect(existing.get("go")!.examples).toHaveLength(2);
   });
 
-  it("任一方是学习中则保持学习中；导入文件内同一 lemma 的条目互相合并", () => {
+  it("生词本里已有的词保持原来的学习状态（已掌握的不会因重新导入变回学习中）", () => {
     const existing = new Map([["go", entry("go", { status: "mastered" })]]);
-    mergeAll(existing, [entry("go", { status: "learning" })]);
-    expect(existing.get("go")!.status).toBe("learning");
+    mergeAll(existing, [entry("go", { status: "learning", examples: [ex("Go now.")] })]);
+    expect(existing.get("go")!.status).toBe("mastered");
+    expect(existing.get("go")!.examples).toHaveLength(1);
+  });
 
+  it("导入文件内同一 lemma 的条目互相合并，任一条是学习中则为学习中", () => {
     const fresh = new Map<string, VocabEntry>();
     const { stats } = mergeAll(fresh, [
-      entry("go", { forms: ["went"], examples: [ex("He went.")] }),
+      entry("go", { forms: ["went"], status: "mastered", examples: [ex("He went.")] }),
       entry("go", { forms: ["gone"], examples: [ex("It's gone.")] }),
     ]);
     expect(stats.added).toBe(1);
     expect(stats.merged).toBe(0);
     expect(fresh.get("go")!.forms).toEqual(["went", "gone"]);
     expect(fresh.get("go")!.examples).toHaveLength(2);
+    expect(fresh.get("go")!.status).toBe("learning");
   });
 
   it("再次导入同一个文件不会产生重复", () => {

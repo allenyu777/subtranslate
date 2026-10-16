@@ -20,13 +20,17 @@ export const emptyStats = (): ImportStats => ({ added: 0, merged: 0, examplesAdd
 
 const sameExample = (a: Example, b: Example) => a.sentence === b.sentence && a.videoId === b.videoId;
 
-/** 把 incoming 合并进 target（就地修改 target） */
-export function mergeEntry(target: VocabEntry, incoming: VocabEntry, stats: ImportStats) {
+/**
+ * 把 incoming 合并进 target（就地修改 target）。
+ * keepStatus：target 是生词本里原有的词时为 true，学习状态以生词本为准
+ * （在插件里标记为已掌握的词，重新导入时不会变回学习中）。
+ */
+export function mergeEntry(target: VocabEntry, incoming: VocabEntry, stats: ImportStats, keepStatus = false) {
   for (const f of incoming.forms ?? []) if (!target.forms.includes(f)) target.forms.push(f);
   if (!target.meaning && incoming.meaning) target.meaning = incoming.meaning;
   if (!target.pron && incoming.pron) target.pron = incoming.pron;
-  // 任何一边还在学习，就保持「学习中」（继续在字幕里高亮）
-  if (incoming.status === "learning") target.status = "learning";
+  // 同一个导入文件里的重复条目：任何一条还在学习，就保持「学习中」
+  if (!keepStatus && incoming.status === "learning") target.status = "learning";
   for (const ex of incoming.examples ?? []) {
     if (target.examples.some((e) => sameExample(e, ex))) {
       stats.examplesSkipped++;
@@ -51,8 +55,9 @@ export function mergeAll(existing: Map<string, VocabEntry>, incoming: VocabEntry
     if (!inc?.lemma || !Array.isArray(inc.examples)) continue;
     const cur = existing.get(inc.lemma);
     if (cur) {
-      if (!addedLemmas.has(inc.lemma)) stats.merged++;
-      mergeEntry(cur, inc, stats);
+      const preexisting = !addedLemmas.has(inc.lemma);
+      if (preexisting) stats.merged++;
+      mergeEntry(cur, inc, stats, preexisting);
       changed.set(cur.lemma, cur);
     } else {
       const copy: VocabEntry = { ...inc, forms: [...(inc.forms ?? [])], examples: [] };
@@ -154,8 +159,8 @@ export function fromLanguageReactor(items: LrItem[], lemmaOf: (word: string) => 
   for (const item of items) {
     const isPhrase = item.itemType === "PHRASE" || item.key?.startsWith("PHRASE|");
     const headword = (item.word?.text ?? item.phrase?.text ?? item.key?.split("|")[1] ?? "").trim();
-    // 只导入英文
-    if (!headword || (item.key && !item.key.endsWith("|en"))) {
+    // 只导入英文；跳过在 Language Reactor 中被忽略的词
+    if (!headword || (item.key && !item.key.endsWith("|en")) || item.learningStage === "SKIPPED") {
       skipped++;
       continue;
     }
