@@ -41,3 +41,5 @@ button.icon:hover { background: var(--line); }
 .pron-label { color: var(--muted); cursor: pointer; }
 .pron-phone { color: var(--link); cursor: pointer; font-family: "Lucida Sans Unicode", "Arial Unicode MS", "Segoe UI", sans-serif; }
 .pron-phone:hover { text-decoration: underline; }
+.import-status { max-width: 900px; margin: 0 auto; padding: 0 16px 8px; font-size: 13px; }
+.import-status:empty { display: none; }

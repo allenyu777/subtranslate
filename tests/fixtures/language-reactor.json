@@ -1,0 +1,1153 @@
+[
+ {
+  "key": "WORD|acre|en",
+  "langCode_G": "en",
+  "translationLangCode_G": "zh-CN",
+  "audio": {
+   "voice": "en-US-AmberNeural",
+   "source": "microsoft",
+   "dateCreated": 1792161743330,
+   "outputFormat": "Audio24Khz48KBitRateMonoMp3"
+  },
+  "learningStage": "SKIPPED",
+  "tags": [],
+  "timeModified_ms": 1792161758976,
+  "timeCreated_ms": 1792161742926,
+  "reviewData": null,
+  "reviewHistory": null,
+  "freqRank": 6820,
+  "source": "YOUTUBE",
+  "ankiGuidKey": null,
+  "itemType": "WORD",
+  "context": {
+   "phrase": {
+    "reference": {
+     "tm": {
+      "md5": "457c96ea1f12a5aefdf9a8db4085a539",
+      "name": "英语 (自动生成)",
+      "vssId": "a.en",
+      "isFromASR": true,
+      "langCode_G": "en",
+      "langCode_YT": "en",
+      "isTranslatable": true,
+      "isTranslatedTrack": false
+     },
+     "source": "YOUTUBE",
+     "savedFrom": "EXTENSION",
+     "diocoDocId": "yt_qt5p-_tE8d0",
+     "endTime_ms": 52399,
+     "refVersion": 2,
+     "diocoDocName": "Roadster Event",
+     "startTime_ms": 47680,
+     "subtitleIndex": 7,
+     "diocoPlaylistId": "yc_UC5WjFrtBdufl6CZojX3D8dQ",
+     "youtubeChannelId": "UC5WjFrtBdufl6CZojX3D8dQ",
+     "diocoPlaylistName": "Tesla",
+     "youtubeChannelName": "Tesla"
+    },
+    "subtitles": {
+     "0": "We are here at SpaceX's uh rocket test and development center in",
+     "1": "McGregor, Texas. It's 4,000 acres. Thank you for having us. Thank you for hosting",
+     "2": "us, SpaceX. Thank you for everyone that's here and thank you for everyone"
+    },
+    "thumb_next": {
+     "time": 60000,
+     "width": 159,
+     "height": 90,
+     "pixelAspectWidth": null,
+     "pixelAspectHeight": null
+    },
+    "thumb_prev": {
+     "time": 50000,
+     "width": 159,
+     "height": 90,
+     "pixelAspectWidth": null,
+     "pixelAspectHeight": null
+    },
+    "hTranslations": null,
+    "mTranslations": {
+     "0": "我们现在位于德克萨斯州麦格雷戈的SpaceX 火箭测试和研发中心",
+     "1": "。 占地4000英亩。 谢谢 你们的款待。 感谢",
+     "2": "SpaceX的热情接待。 感谢到场的每一位， 也感谢所有"
+    },
+    "subtitleTokens": {
+     "0": [
+      {
+       "form": {
+        "text": "We"
+       },
+       "lemma": {
+        "text": "we"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "are"
+       },
+       "lemma": {
+        "text": "be"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "here"
+       },
+       "lemma": {
+        "text": "here"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "at"
+       },
+       "lemma": {
+        "text": "at"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "SpaceX's"
+       },
+       "lemma": {
+        "text": "SpaceX"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "uh"
+       },
+       "lemma": {
+        "text": "uh"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "rocket"
+       },
+       "lemma": {
+        "text": "rocket"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "test"
+       },
+       "lemma": {
+        "text": "test"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "and"
+       },
+       "lemma": {
+        "text": "and"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "development"
+       },
+       "lemma": {
+        "text": "development"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "center"
+       },
+       "lemma": {
+        "text": "center"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "in"
+       },
+       "lemma": {
+        "text": "in"
+       }
+      }
+     ],
+     "1": [
+      {
+       "form": {
+        "text": "McGregor"
+       },
+       "lemma": {
+        "text": "Mcgregor"
+       }
+      },
+      {
+       "form": {
+        "text": ","
+       },
+       "lemma": {
+        "text": ","
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "Texas"
+       }
+      },
+      {
+       "form": {
+        "text": "."
+       },
+       "lemma": {
+        "text": "."
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "It's"
+       },
+       "lemma": {
+        "text": "it"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "4,000"
+       },
+       "lemma": {
+        "text": "4,000"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "acres"
+       },
+       "lemma": {
+        "text": "acre"
+       }
+      },
+      {
+       "form": {
+        "text": "."
+       },
+       "lemma": {
+        "text": "."
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "Thank"
+       },
+       "lemma": {
+        "text": "thank"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "you"
+       },
+       "lemma": {
+        "text": "you"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "for"
+       },
+       "lemma": {
+        "text": "for"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "having"
+       },
+       "lemma": {
+        "text": "have"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "us"
+       },
+       "lemma": {
+        "text": "we"
+       }
+      },
+      {
+       "form": {
+        "text": "."
+       },
+       "lemma": {
+        "text": "."
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "Thank"
+       },
+       "lemma": {
+        "text": "thank"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "you"
+       },
+       "lemma": {
+        "text": "you"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "for"
+       },
+       "lemma": {
+        "text": "for"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "hosting"
+       },
+       "lemma": {
+        "text": "host"
+       }
+      }
+     ],
+     "2": [
+      {
+       "form": {
+        "text": "us"
+       },
+       "lemma": {
+        "text": "we"
+       }
+      },
+      {
+       "form": {
+        "text": ","
+       },
+       "lemma": {
+        "text": ","
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "SpaceX"
+       },
+       "lemma": {
+        "text": "SpaceX"
+       }
+      },
+      {
+       "form": {
+        "text": "."
+       },
+       "lemma": {
+        "text": "."
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "Thank"
+       },
+       "lemma": {
+        "text": "thank"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "you"
+       },
+       "lemma": {
+        "text": "you"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "for"
+       },
+       "lemma": {
+        "text": "for"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "everyone"
+       },
+       "lemma": {
+        "text": "everyone"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "that's"
+       },
+       "lemma": {
+        "text": "that"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "here"
+       },
+       "lemma": {
+        "text": "here"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "and"
+       },
+       "lemma": {
+        "text": "and"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "thank"
+       },
+       "lemma": {
+        "text": "thank"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "you"
+       },
+       "lemma": {
+        "text": "you"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "for"
+       },
+       "lemma": {
+        "text": "for"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "everyone"
+       },
+       "lemma": {
+        "text": "everyone"
+       }
+      }
+     ]
+    }
+   },
+   "wordIndex": 10
+  },
+  "wordTranslationsArr": [
+   "英亩",
+   "亩",
+   "公亩"
+  ],
+  "wordType": "lemma",
+  "word": {
+   "text": "acre"
+  },
+  "diocoFreq": 6820
+ },
+ {
+  "key": "WORD|raptor|en",
+  "langCode_G": "en",
+  "translationLangCode_G": "zh-CN",
+  "audio": {
+   "voice": "en-US-MichelleNeural",
+   "source": "microsoft",
+   "dateCreated": 1792161665516,
+   "outputFormat": "Audio24Khz48KBitRateMonoMp3"
+  },
+  "learningStage": "SKIPPED",
+  "tags": [],
+  "timeModified_ms": 1792161665154,
+  "timeCreated_ms": 1792161665154,
+  "reviewData": null,
+  "reviewHistory": null,
+  "freqRank": 8974,
+  "source": "YOUTUBE",
+  "ankiGuidKey": null,
+  "itemType": "WORD",
+  "context": {
+   "phrase": {
+    "reference": {
+     "tm": {
+      "md5": "457c96ea1f12a5aefdf9a8db4085a539",
+      "name": "英语 (自动生成)",
+      "vssId": "a.en",
+      "isFromASR": true,
+      "langCode_G": "en",
+      "langCode_YT": "en",
+      "isTranslatable": true,
+      "isTranslatedTrack": false
+     },
+     "source": "YOUTUBE",
+     "savedFrom": "EXTENSION",
+     "diocoDocId": "yt_qt5p-_tE8d0",
+     "endTime_ms": 42500,
+     "refVersion": 2,
+     "diocoDocName": "Roadster Event",
+     "startTime_ms": 37760,
+     "subtitleIndex": 5,
+     "diocoPlaylistId": "yc_UC5WjFrtBdufl6CZojX3D8dQ",
+     "youtubeChannelId": "UC5WjFrtBdufl6CZojX3D8dQ",
+     "diocoPlaylistName": "Tesla",
+     "youtubeChannelName": "Tesla"
+    },
+    "subtitles": {
+     "0": "[cheering] >> I'm Fron. This is Lars. We hope you",
+     "1": "enjoyed our little pre-show Raptor static fire over there.",
+     "2": "We are here at SpaceX's uh rocket test and development center in"
+    },
+    "thumb_next": {
+     "time": 50000,
+     "width": 159,
+     "height": 90,
+     "pixelAspectWidth": null,
+     "pixelAspectHeight": null
+    },
+    "thumb_prev": {
+     "time": 40000,
+     "width": 159,
+     "height": 90,
+     "pixelAspectWidth": null,
+     "pixelAspectHeight": null
+    },
+    "hTranslations": null,
+    "mTranslations": {
+     "0": "[欢呼声] 我是弗朗。 这是拉尔斯。 希望您",
+     "1": "喜欢我们那边那场小型的猛禽 静态火焰表演。",
+     "2": "我们现在位于德克萨斯州麦格雷戈的SpaceX 火箭测试和研发中心"
+    },
+    "subtitleTokens": {
+     "0": [
+      {
+       "form": {
+        "text": "["
+       },
+       "lemma": {
+        "text": "["
+       }
+      },
+      {
+       "form": {
+        "text": "cheering"
+       },
+       "lemma": {
+        "text": "cheer"
+       }
+      },
+      {
+       "form": {
+        "text": "]"
+       },
+       "lemma": {
+        "text": "]"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": ">>"
+       },
+       "lemma": {
+        "text": ">>"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "I'm"
+       },
+       "lemma": {
+        "text": "I"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "Fron"
+       },
+       "lemma": {
+        "text": "Fron"
+       }
+      },
+      {
+       "form": {
+        "text": "."
+       },
+       "lemma": {
+        "text": "."
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "This"
+       },
+       "lemma": {
+        "text": "this"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "is"
+       },
+       "lemma": {
+        "text": "be"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "Lars"
+       },
+       "lemma": {
+        "text": "Lars"
+       }
+      },
+      {
+       "form": {
+        "text": "."
+       },
+       "lemma": {
+        "text": "."
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "We"
+       },
+       "lemma": {
+        "text": "we"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "hope"
+       },
+       "lemma": {
+        "text": "hope"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "you"
+       },
+       "lemma": {
+        "text": "you"
+       }
+      }
+     ],
+     "1": [
+      {
+       "form": {
+        "text": "enjoyed"
+       },
+       "lemma": {
+        "text": "enjoy"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "our"
+       },
+       "lemma": {
+        "text": "we"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "little"
+       },
+       "lemma": {
+        "text": "little"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "pre-show"
+       },
+       "lemma": {
+        "text": "pre-show"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "Raptor"
+       },
+       "lemma": {
+        "text": "raptor"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "static"
+       },
+       "lemma": {
+        "text": "static"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "fire"
+       },
+       "lemma": {
+        "text": "fire"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "over"
+       },
+       "lemma": {
+        "text": "over"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "there"
+       },
+       "lemma": {
+        "text": "there"
+       }
+      },
+      {
+       "form": {
+        "text": "."
+       },
+       "lemma": {
+        "text": "."
+       }
+      }
+     ],
+     "2": [
+      {
+       "form": {
+        "text": "We"
+       },
+       "lemma": {
+        "text": "we"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "are"
+       },
+       "lemma": {
+        "text": "be"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "here"
+       },
+       "lemma": {
+        "text": "here"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "at"
+       },
+       "lemma": {
+        "text": "at"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "SpaceX's"
+       },
+       "lemma": {
+        "text": "SpaceX"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "uh"
+       },
+       "lemma": {
+        "text": "uh"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "rocket"
+       },
+       "lemma": {
+        "text": "rocket"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "test"
+       },
+       "lemma": {
+        "text": "test"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "and"
+       },
+       "lemma": {
+        "text": "and"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "development"
+       },
+       "lemma": {
+        "text": "development"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "center"
+       },
+       "lemma": {
+        "text": "center"
+       }
+      },
+      {
+       "form": {
+        "text": " "
+       }
+      },
+      {
+       "form": {
+        "text": "in"
+       },
+       "lemma": {
+        "text": "in"
+       }
+      }
+     ]
+    }
+   },
+   "wordIndex": 8
+  },
+  "wordTranslationsArr": [
+   "猛禽",
+   "恐龙",
+   "迅猛龙"
+  ],
+  "wordType": "lemma",
+  "word": {
+   "text": "raptor"
+  },
+  "diocoFreq": 8974
+ }
+]

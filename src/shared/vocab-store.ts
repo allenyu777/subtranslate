@@ -1,3 +1,4 @@
+import { mergeAll } from "./import";
 import type { Example, Pronunciation, VocabEntry, WordStatus } from "./types";
 
 const PREFIX = "v:";
@@ -112,25 +113,21 @@ export async function setStatus(lemma: string, status: WordStatus): Promise<void
   await putEntry(entry);
 }
 
-/** 导入备份：同 lemma 的条目合并例句 */
-export async function importEntries(entries: VocabEntry[]): Promise<number> {
-  let count = 0;
-  for (const incoming of entries) {
-    if (!incoming?.lemma || !Array.isArray(incoming.examples)) continue;
-    const existing = await getEntry(incoming.lemma);
-    if (!existing) {
-      await putEntry(incoming);
-    } else {
-      for (const f of incoming.forms ?? []) if (!existing.forms.includes(f)) existing.forms.push(f);
-      for (const ex of incoming.examples) {
-        if (!findExample(existing, ex.sentence, ex.videoId)) existing.examples.push(ex);
-      }
-      existing.updatedAt = Math.max(existing.updatedAt, incoming.updatedAt ?? 0);
-      await putEntry(existing);
-    }
-    count++;
+/** 批量写入，每批 200 个词，避免一次写入过多 */
+export async function putEntries(entries: VocabEntry[], onProgress?: (done: number, total: number) => void) {
+  for (let i = 0; i < entries.length; i += 200) {
+    const batch = entries.slice(i, i + 200);
+    await chrome.storage.local.set(Object.fromEntries(batch.map((e) => [keyOf(e.lemma), e])));
+    onProgress?.(Math.min(i + 200, entries.length), entries.length);
   }
-  return count;
+}
+
+/** 导入：按 lemma 与已有生词合并去重后写入 */
+export async function importVocab(incoming: VocabEntry[], onProgress?: (done: number, total: number) => void) {
+  const existing = new Map((await getAllEntries()).map((e) => [e.lemma, e]));
+  const { changed, stats } = mergeAll(existing, incoming);
+  await putEntries(changed, onProgress);
+  return stats;
 }
 
 export function isVocabKey(key: string): boolean {

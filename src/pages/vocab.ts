@@ -1,6 +1,7 @@
 import { normalizeWord, tokenize } from "../shared/tokenize";
 import type { Pronunciation, VocabEntry } from "../shared/types";
-import { deleteEntry, getAllEntries, importEntries, isVocabKey, removeExample, setPron, setStatus } from "../shared/vocab-store";
+import { fromLanguageReactor, isLanguageReactorExport, type ImportStats } from "../shared/import";
+import { deleteEntry, getAllEntries, getEntry, importVocab, isVocabKey, putEntries, removeExample, setStatus } from "../shared/vocab-store";
 import { h } from "../content/dom";
 import { pronView } from "../content/pron-view";
 import { bg } from "../shared/messaging";
@@ -114,11 +115,12 @@ function renderEntry(e: VocabEntry): HTMLElement {
             h(
               "div",
               { class: "ex-meta" },
-              h(
-                "a",
-                { href: videoLink(x.videoId, x.time), target: "_blank", rel: "noopener", title: "回到视频中的这一句" },
-                `▶ ${fmtTime(x.time)}`,
-              ),
+              x.videoId &&
+                h(
+                  "a",
+                  { href: videoLink(x.videoId, x.time), target: "_blank", rel: "noopener", title: "回到视频中的这一句" },
+                  `▶ ${fmtTime(x.time)}`,
+                ),
               h("span", { class: "muted" }, x.videoTitle),
               h("span", { class: "grow" }),
               h("span", { class: "muted" }, new Date(x.addedAt).toLocaleDateString()),
@@ -161,13 +163,30 @@ async function backfillPronunciation() {
   if (backfilling) return;
   backfilling = true;
   try {
-    for (const e of entries.filter((x) => x.pron === undefined)) {
-      try {
-        await setPron(e.lemma, await bg<Pronunciation>({ type: "pronounce", word: e.lemma }));
-      } catch {
-        // 网络失败就下次再补
+    const todo = entries.filter((x) => x.pron === undefined).map((x) => x.lemma);
+    // 3 个并发查询，每 20 个词写入一次（导入大量单词后不会频繁刷新页面）
+    const found = new Map<string, Pronunciation>();
+    const flush = async () => {
+      const batch: VocabEntry[] = [];
+      for (const [lemma, pron] of found) {
+        const e = await getEntry(lemma);
+        if (e) batch.push({ ...e, pron });
       }
-    }
+      found.clear();
+      await putEntries(batch);
+    };
+    const worker = async () => {
+      for (let lemma = todo.shift(); lemma; lemma = todo.shift()) {
+        try {
+          found.set(lemma, await bg<Pronunciation>({ type: "pronounce", word: lemma }));
+        } catch {
+          // 网络失败就下次再补
+        }
+        if (found.size >= 20) await flush();
+      }
+    };
+    await Promise.all([worker(), worker(), worker()]);
+    await flush();
   } finally {
     backfilling = false;
   }
@@ -187,18 +206,50 @@ $("export-json").addEventListener("click", () => {
 });
 $("import-json").addEventListener("click", () => $<HTMLInputElement>("import-file").click());
 $<HTMLInputElement>("import-file").addEventListener("change", async (ev) => {
-  const file = (ev.target as HTMLInputElement).files?.[0];
+  const input = ev.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = "";
   if (!file) return;
+  const status = $("import-status");
+  const show = (text: string) => (status.textContent = text);
   try {
-    const data = JSON.parse(await file.text()) as VocabEntry[];
+    show(`正在读取 ${file.name}（${(file.size / 1024 / 1024).toFixed(1)} MB）…`);
+    const data = JSON.parse(await file.text()) as unknown;
     if (!Array.isArray(data)) throw new Error("文件格式不对");
-    const n = await importEntries(data);
-    alert(`已导入 ${n} 个单词`);
+    let incoming: VocabEntry[];
+    let source = "备份";
+    let skipped = 0;
+    if (isLanguageReactorExport(data)) {
+      source = "Language Reactor";
+      show(`识别为 Language Reactor 导出，共 ${data.length} 条，正在统一单词原形…`);
+      const words = [...new Set(data.map((x) => x.word?.text ?? "").filter((w) => w && !/\s/.test(w)))];
+      const lemmas: Record<string, string> = {};
+      for (let i = 0; i < words.length; i += 2000) {
+        Object.assign(lemmas, await bg<Record<string, string>>({ type: "lemmatize", words: words.slice(i, i + 2000) }));
+      }
+      const res = fromLanguageReactor(data, (w) => lemmas[w] ?? w.toLowerCase());
+      incoming = res.entries;
+      skipped = res.skipped;
+    } else {
+      incoming = data as VocabEntry[];
+    }
+    const stats = await importVocab(incoming, (done, total) => show(`正在写入生词本 ${done}/${total}…`));
+    show(summary(source, stats, skipped));
   } catch (err) {
-    alert(`导入失败：${(err as Error).message}`);
+    show(`导入失败：${(err as Error).message}`);
   }
-  (ev.target as HTMLInputElement).value = "";
 });
+
+function summary(source: string, s: ImportStats, skipped: number): string {
+  const parts = [
+    `从${source}导入完成：新增 ${s.added} 个词`,
+    `合并到已有单词 ${s.merged} 个`,
+    `新增例句 ${s.examplesAdded} 条`,
+  ];
+  if (s.examplesSkipped) parts.push(`跳过重复例句 ${s.examplesSkipped} 条`);
+  if (skipped) parts.push(`跳过非英语条目 ${skipped} 个`);
+  return parts.join("，") + "。";
+}
 
 search.addEventListener("input", render);
 statusSel.addEventListener("change", render);
