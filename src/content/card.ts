@@ -1,5 +1,6 @@
 import { bg } from "../shared/messaging";
 import { isLlmConfigured } from "../shared/settings";
+import { speak } from "../shared/speech";
 import { normalizeWord, tokenize } from "../shared/tokenize";
 import type { Cue, DictResult, SentenceAnalysis, Settings, WordAnalysis } from "../shared/types";
 import { addWord, findExample, getEntry, removeExample } from "../shared/vocab-store";
@@ -34,17 +35,6 @@ export function summarizeDict(d: DictResult | null): string {
     .map((e) => `${e.pos} ${e.terms.slice(0, 3).join("；")}`.trim())
     .join("  ");
   return s || d.translation;
-}
-
-function speak(word: string) {
-  try {
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(word);
-    u.lang = "en-US";
-    speechSynthesis.speak(u);
-  } catch {
-    // 浏览器不支持就算了
-  }
 }
 
 /** 渲染句子，把目标词加粗 */
@@ -122,7 +112,7 @@ export class Card {
     let ai: WordAnalysis | null = null;
     let saved = false;
 
-    const phon = h("span", { class: "phon" });
+    const phon = h("span", { class: "phon", title: "点击朗读", onclick: () => speak(t.lemma) });
     const saveBtn = h("button", { class: "primary" }, "☆ 加入生词本");
     const dictSec = h("div", { class: "sec" }, spinner("查询释义…"));
     const trSec = h("div");

@@ -2,6 +2,7 @@ import { normalizeWord, tokenize } from "../shared/tokenize";
 import type { VocabEntry } from "../shared/types";
 import { deleteEntry, getAllEntries, importEntries, isVocabKey, removeExample, setStatus } from "../shared/vocab-store";
 import { h } from "../content/dom";
+import { speak } from "../shared/speech";
 import { toCsv, videoLink } from "../shared/export";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -54,8 +55,10 @@ function renderEntry(e: VocabEntry): HTMLElement {
     h(
       "div",
       { class: "entry-head" },
-      h("span", { class: "lemma" }, e.lemma),
-      e.phonetic && h("span", { class: "phon" }, `/${e.phonetic.replace(/^\/|\/$/g, "")}/`),
+      h("span", { class: "lemma speakable", title: "点击朗读", onclick: () => speak(e.lemma) }, e.lemma),
+      e.phonetic &&
+        h("span", { class: "phon speakable", title: "点击朗读", onclick: () => speak(e.lemma) }, `/${e.phonetic.replace(/^\/|\/$/g, "")}/`),
+      h("button", { class: "icon", title: "朗读单词", onclick: () => speak(e.lemma) }, "🔊"),
       e.forms.some((f) => f !== e.lemma) && h("span", { class: "forms" }, `形态：${e.forms.join(", ")}`),
       h("span", { class: "grow" }),
       h(
@@ -87,7 +90,13 @@ function renderEntry(e: VocabEntry): HTMLElement {
           h(
             "div",
             { class: "ex" },
-            h("div", { class: "sent" }, ...highlighted(x.sentence, [...e.forms, x.word])),
+            h(
+              "div",
+              { class: "sent" },
+              ...highlighted(x.sentence, [...e.forms, x.word]),
+              " ",
+              h("button", { class: "icon", title: "朗读例句", onclick: () => speak(x.sentence) }, "🔊"),
+            ),
             x.translation && h("div", { class: "tr" }, x.translation),
             x.ai &&
               h(

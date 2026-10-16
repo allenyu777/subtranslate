@@ -1,3 +1,4 @@
+import { normalizeChinese } from "../shared/chinese";
 import type { DictResult } from "../shared/types";
 
 /*
@@ -33,6 +34,10 @@ async function translateOne(text: string, target: string): Promise<string> {
 
 /** 批量翻译字幕，一次请求翻译多句，结果与输入一一对应 */
 export async function translateBatch(texts: string[], target: string): Promise<string[]> {
+  return (await translateBatchRaw(texts, target)).map((t) => normalizeChinese(t, target));
+}
+
+async function translateBatchRaw(texts: string[], target: string): Promise<string[]> {
   if (!texts.length) return [];
   const body = new URLSearchParams();
   for (const t of texts) body.append("q", t);
@@ -109,6 +114,14 @@ export async function lookupWord(word: string, lemma: string, target: string): P
     if (alt?.entries.length) result = alt;
   }
   if (phonetic) result = { ...result, phonetic };
+  result = {
+    ...result,
+    entries: result.entries.map((e) => ({
+      pos: normalizeChinese(e.pos, target),
+      terms: [...new Set(e.terms.map((t) => normalizeChinese(t, target)))],
+    })),
+    translation: normalizeChinese(result.translation, target),
+  };
   cache.set(key, result);
   return result;
 }

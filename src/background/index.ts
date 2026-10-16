@@ -1,6 +1,8 @@
+import { simplifyEntry } from "../shared/chinese";
 import { lemmatize } from "../shared/lemma";
 import { getSettings, isLlmConfigured } from "../shared/settings";
 import type { BgRequest, BgResponse } from "../shared/types";
+import { getAllEntries, putEntry } from "../shared/vocab-store";
 import { analyzeSentence, analyzeWord } from "./llm";
 import { lookupWord, translateBatch } from "./translate";
 
@@ -37,4 +39,14 @@ chrome.runtime.onMessage.addListener((req: BgRequest, _sender, sendResponse) => 
       sendResponse({ ok: false, error: err instanceof Error ? err.message : String(err) } satisfies BgResponse<unknown>),
   );
   return true; // 异步响应
+});
+
+chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  if (reason !== "update") return;
+  const settings = await getSettings();
+  if (settings.targetLang !== "zh-CN") return;
+  for (const entry of await getAllEntries()) {
+    const fixed = simplifyEntry(entry);
+    if (JSON.stringify(fixed) !== JSON.stringify(entry)) await putEntry(fixed);
+  }
 });
